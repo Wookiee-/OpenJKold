@@ -2511,6 +2511,10 @@ void ClientThink_real( gentity_t *ent ) {
 			if (ent->health > 0 && ent->client->ps.stats[STAT_HEALTH] > 0)
 			{
 				trap->SendServerCommand( -1, va("cp \"%s %s %s!\n\"", ent->client->pers.netname, G_GetStringEdString("MP_SVGAME", "PLDUELWINNER"), duelAgainst->client->pers.netname) );
+
+                        if (ent->health < ent->client->ps.stats[STAT_MAX_HEALTH])
+                                ent->client->ps.stats[STAT_HEALTH] = ent->health = ent->client->ps.stats[STAT_MAX_HEALTH];
+                                ent->client->ps.stats[STAT_ARMOR] = 25;//JAPRO
 			}
 			else
 			{ //it was a draw, because we both managed to die in the same frame
