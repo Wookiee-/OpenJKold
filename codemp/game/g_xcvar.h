@@ -178,4 +178,13 @@ XCVAR_DEF( timelimit,					"0",			NULL,				CVAR_SERVERINFO|CVAR_ARCHIVE|CVAR_NORE
 
 XCVAR_DEF( g_duelStartHealth,			"0",			NULL,				CVAR_ARCHIVE,									qtrue )
 XCVAR_DEF( g_duelStartArmor, 			"0", 			NULL, 				CVAR_ARCHIVE, 									qtrue )
+
+//JAPRO ADMIN
+XCVAR_DEF( g_juniorAdminLevel,			"0",			NULL,				CVAR_ARCHIVE,									qfalse )
+XCVAR_DEF( g_fullAdminLevel,			"0",			NULL,				CVAR_ARCHIVE,									qfalse )
+XCVAR_DEF( g_juniorAdminPass,			"",				NULL,				CVAR_ARCHIVE,									qfalse )
+XCVAR_DEF( g_fullAdminPass,				"",				NULL,				CVAR_ARCHIVE,									qfalse )
+XCVAR_DEF( g_juniorAdminMsg,			"",				NULL,				CVAR_ARCHIVE,									qfalse )
+XCVAR_DEF( g_fullAdminMsg, 				"", 			NULL, 				CVAR_ARCHIVE, 									qfalse )
+
 #undef XCVAR_DEF

@@ -40,6 +40,8 @@ int killPlayerTimer = 0;
 gentity_t		g_entities[MAX_GENTITIES];
 gclient_t		g_clients[MAX_CLIENTS];
 
+int	dueltypes[MAX_CLIENTS];//JAPRO - Serverside - Fullforce Duels
+
 qboolean gDuelExit = qfalse;
 
 void G_InitGame					( int levelTime, int randomSeed, int restart );

@@ -174,6 +174,62 @@ extern void *g2SaberInstance;
 extern qboolean gEscaping;
 extern int gEscapeTime;
 
+extern int dueltypes[MAX_CLIENTS];//JAPRO - Serverside - Fullforce Duels y is this extern
+
+//JAPRO - Serverside - Admin bitrates
+typedef enum {
+	A_ADMINTELE,
+	A_FREEZE,
+	A_TELEMARK,
+	A_ADMINBAN,
+	A_ADMINKICK,
+	A_NPC,
+	A_NOCLIP,
+	A_GRANTADMIN,
+	A_CHANGEMAP,
+	A_CSPRINT,
+	A_FORCETEAM,
+	A_LOCKTEAM,
+	A_VSTR,
+	A_SEEIP,
+	A_RENAME,
+	A_LISTMAPS,
+	A_BUILDHIGHSCORES,
+	A_WHOIS,
+	A_LOOKUP,
+	A_NOFOLLOW,
+	A_SEEHIDDEN,
+	A_CALLVOTE,
+	A_KILLVOTE
+} admin_type_t;
+
+//JAPRO - Serverside - Emote bitrates
+typedef enum {
+	E_BEG,
+	E_BEG2,
+	E_BREAKDANCE,
+	E_CHEER,
+	E_COWER,
+	E_DANCE,
+	E_HUG,
+	E_NOISY,
+	E_POINT,
+	E_RAGE,
+	E_SIT,
+	E_SURRENDER,
+	E_SMACK,
+	E_TAUNT,
+	E_VICTORY,
+	E_JAWARUN,
+	E_BERNIE,
+	E_SLEEP,
+	E_SABERFLIP,
+	E_SLAP,
+	E_SIGNAL,
+//	E_SHEEV,//Group them all here, running out of space in this :s
+	E_ALL
+} emote_type_t;
+
 struct gentity_s {
 	//rww - entstate must be first, to correspond with the bg shared entity structure
 	entityState_t	s;				// communicated by server to clients
@@ -404,6 +460,8 @@ struct gentity_s {
 
 	// OpenJK add
 	int			useDebounceTime;	// for cultist_destroyer
+	
+
 };
 
 #define DAMAGEREDIRECT_HEAD		1
@@ -471,6 +529,9 @@ typedef struct clientSession_s {
 	int			siegeDesiredTeam;
 
 	char		IP[NET_ADDRSTRMAXLEN];
+	qboolean	juniorAdmin;
+	qboolean 	fullAdmin;
+	
 } clientSession_t;
 
 // playerstate mGameFlags
@@ -497,14 +558,16 @@ typedef struct clientPersistant_s {
 	int			enterTime;			// level.time the client entered the game
 	playerTeamState_t teamState;	// status in teamplay games
 	qboolean	teamInfo;			// send team overlay updates?
-
-	int			connectTime;
-
+	int			connectTime;	
 	char		saber1[MAX_QPATH], saber2[MAX_QPATH];
-
 	int			vote, teamvote; // 0 = none, 1 = yes, 2 = no
-
 	char		guid[33];
+	
+	qboolean	isJAPRO;//JAPRO - Serverside - Add Clientside Version
+	vec3_t		telemarkOrigin;//JAPRO - Serverside - Admin - Telemark storage
+	float		telemarkAngle;//JAPRO - Serverside - Admin - Telemark storage
+	float		telemarkPitchAngle;//JAPRO - Serverside - Admin - Telemark storage
+	vec3_t		respawnLocation;//JAPRO - Serverside - Admin - Telemark storage	
 } clientPersistant_t;
 
 typedef struct renderInfo_s
@@ -796,6 +859,7 @@ struct gclient_s {
 		int		drainDebounce;
 		int		lightningDebounce;
 	} force;
+	int	lastInStartTrigger;	
 };
 
 //Interest points
@@ -1255,6 +1319,9 @@ int TAG_GetRadius( const char *owner, const char *name );
 int TAG_GetFlags( const char *owner, const char *name );
 
 void TeleportPlayer( gentity_t *player, vec3_t origin, vec3_t angles );
+void AmTeleportPlayer( gentity_t *player, vec3_t origin, vec3_t angles, qboolean droptofloor, qboolean race );
+
+extern void JP_Trace( trace_t *results, const vec3_t start, const vec3_t mins, const vec3_t maxs, const vec3_t end, int passEntityNum, int contentmask, int capsule, int traceFlags, int useLod );
 
 //
 // g_weapon.c

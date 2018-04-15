@@ -171,6 +171,160 @@ qboolean StringIsInteger( const char *s ) {
 	return foundDigit;
 }
 
+//[JAPRO - Serverside - All - Redid and moved sanitizestring2 for partial name recognition - Start]
+/*
+==================
+SanitizeString2
+Rich's revised version of SanitizeString
+==================
+*/
+void SanitizeString2( const char *in, char *out )
+{
+	int i = 0;
+	int r = 0;
+
+	while (in[i])
+	{
+		if (i >= MAX_NAME_LENGTH-1)
+		{ //the ui truncates the name here..
+			break;
+		}
+
+		if (in[i] == '^')
+		{
+			if (in[i+1] >= 48 && //'0'
+				in[i+1] <= 57) //'9'
+			{ //only skip it if there's a number after it for the color
+				i += 2;
+				continue;
+			}
+			else
+			{ //just skip the ^
+				i++;
+				continue;
+			}
+		}
+
+		if (in[i] < 32)
+		{
+			i++;
+			continue;
+		}
+
+		out[r] = tolower(in[i]);//lowercase please
+		r++;
+		i++;
+	}
+	out[r] = 0;
+}
+//[JAPRO - Serverside - All - Redid and moved sanitizestring2 for partial name recognition - End]
+
+//[JAPRO - Serverside - All - Redid and clientnumberfromstring for partial name recognition - Start]
+/*
+==================
+ClientNumberFromString
+Returns a player number for either a number or name string
+Returns -1 if invalid
+==================
+*/
+static int JP_ClientNumberFromString(gentity_t *to, const char *s) 
+{
+	gclient_t	*cl;
+	int			idnum, i, match = -1;
+	char		s2[MAX_STRING_CHARS];
+	char		n2[MAX_STRING_CHARS];
+	idnum = atoi(s);
+
+
+	//redo
+	/*
+	if (!Q_stricmp(s, "0")) {
+		cl = &level.clients[idnum];
+		if ( cl->pers.connected != CON_CONNECTED ) {
+			trap->SendServerCommand( to-g_entities, va("print \"Client '%i' is not active\n\"", idnum));
+			return -1;
+		}
+		return 0;
+	}
+	if (idnum && idnum < 32) {
+		cl = &level.clients[idnum];
+		if ( cl->pers.connected != CON_CONNECTED ) {
+			trap->SendServerCommand( to-g_entities, va("print \"Client '%i' is not active\n\"", idnum));
+			return -1;
+		}
+		return idnum;
+	}
+	*/
+	//end redo
+
+	// numeric values are just slot numbers
+	if (s[0] >= '0' && s[0] <= '9' && strlen(s) == 1) //changed this to only recognize numbers 0-31 as client numbers, otherwise interpret as a name, in which case sanitize2 it and accept partial matches (return error if multiple matches)
+		{
+		idnum = atoi( s );
+		cl = &level.clients[idnum];
+		if ( cl->pers.connected != CON_CONNECTED ) {
+			trap->SendServerCommand( to-g_entities, va("print \"Client '%i' is not active\n\"", idnum));
+			return -1;
+		}
+		return idnum;
+	}
+
+	if ((s[0] == '1' || s[0] == '2') && (s[1] >= '0' && s[1] <= '9' && strlen(s) == 2))  //changed and to or ..
+	{
+		idnum = atoi( s );
+		cl = &level.clients[idnum];
+		if ( cl->pers.connected != CON_CONNECTED ) {
+			trap->SendServerCommand( to-g_entities, va("print \"Client '%i' is not active\n\"", idnum));
+			return -1;
+		}
+		return idnum;
+	}
+
+	if (s[0] == '3' && (s[1] >= '0' && s[1] <= '1' && strlen(s) == 2)) 
+	{
+		idnum = atoi( s );
+		cl = &level.clients[idnum];
+		if ( cl->pers.connected != CON_CONNECTED ) {
+			trap->SendServerCommand( to-g_entities, va("print \"Client '%i' is not active\n\"", idnum));
+			return -1;
+		}
+		return idnum;
+	}
+	
+
+
+
+	// check for a name match
+	SanitizeString2( s, s2 );
+	for ( idnum=0,cl=level.clients ; idnum < level.maxclients ; idnum++,cl++ ){
+		if ( cl->pers.connected != CON_CONNECTED ) {
+			continue;
+		}
+		SanitizeString2( cl->pers.netname, n2 );
+
+		for (i=0 ; i < level.numConnectedClients ; i++) 
+		{
+			cl=&level.clients[level.sortedClients[i]];
+			SanitizeString2( cl->pers.netname, n2 );
+			if (strstr(n2, s2)) 
+			{
+				if(match != -1)
+				{ //found more than one match
+					trap->SendServerCommand( to-g_entities, va("print \"More than one user '%s' on the server\n\"", s));
+					return -2;
+				}
+				match = level.sortedClients[i];
+			}
+		}
+		if (match != -1)//uhh
+			return match;
+	}
+	if (!atoi(s)) //Uhh.. well.. whatever. fixes amtele spam problem when teleporting to x y z yaw
+		trap->SendServerCommand(to-g_entities, va("print \"User '%s' is not on the server\n\"", s));
+	return -1;
+}
+//[JAPRO - Serverside - All - Redid and clientnumberfromstring for partial name recognition - End]
+
 /*
 ==================
 ClientNumberFromString
@@ -3482,3 +3636,318 @@ void ClientCommand( int clientNum ) {
 	else
 		command->func( ent );
 }
+
+//[JAPRO - Serverside - All - Amlogin Function - Start]
+/*
+=================
+Cmd_Amlogin_f
+=================
+*/
+void Cmd_Amlogin_f(gentity_t *ent)
+{
+	char   pass[MAX_STRING_CHARS]; 
+
+	trap->Argv( 1, pass, sizeof( pass ) ); //Password
+
+	if (!ent->client)
+		return;
+
+	if (trap->Argc() == 1)
+	{
+		trap->SendServerCommand( ent-g_entities, "print \"Usage: amLogin <password>\n\"" ); 
+		return; 
+	}
+	if (trap->Argc() == 2) 
+	{
+		if (ent->client->sess.juniorAdmin || ent->client->sess.fullAdmin)
+		{
+			trap->SendServerCommand( ent-g_entities, "print \"You are already logged in. Type in /amLogout to remove admin status.\n\"" ); 
+			return; 
+		}
+		if (!Q_stricmp( pass, "" ))
+		{
+			trap->SendServerCommand( ent-g_entities, "print \"Usage: amLogin <password>\n\"" ); 
+			return;
+		}
+		if ( !Q_stricmp( pass, g_fullAdminPass.string ) )
+		{
+			if ( !Q_stricmp( "", g_fullAdminPass.string ) )//dunno
+				return;
+			ent->client->sess.fullAdmin = qtrue;
+			trap->SendServerCommand( ent-g_entities, "print \"^2You are now logged in with full admin privileges.\n\"");
+			if (Q_stricmp(g_fullAdminMsg.string, "" ))
+				trap->SendServerCommand( -1, va("print \"%s ^7%s\n\"", ent->client->pers.netname, g_fullAdminMsg.string ));
+			return; 
+		}
+		if ( !Q_stricmp( pass, g_juniorAdminPass.string ) )
+		{
+			if ( !Q_stricmp( "", g_juniorAdminPass.string ) )
+				return;
+			ent->client->sess.juniorAdmin = qtrue;
+			trap->SendServerCommand( ent-g_entities, "print \"^2You are now logged in with junior admin privileges.\n\"");
+			if (Q_stricmp(g_juniorAdminMsg.string, "" ))
+				trap->SendServerCommand( -1, va("print \"%s ^7%s\n\"", ent->client->pers.netname, g_juniorAdminMsg.string ));
+			return; 
+		}
+		else 
+		{
+			trap->SendServerCommand( ent-g_entities, "print \"^3Failed to log in: Incorrect password!\n\"");
+		}
+	}
+}
+//[JAPRO - Serverside - All - Amlogin Function - End]
+
+//[JAPRO - Serverside - All - Amlogout Function - Start]
+/*
+=================
+Cmd_Amlogout_f
+=================
+*/
+void Cmd_Amlogout_f(gentity_t *ent)
+{
+	if (!ent->client)
+		return;
+	if (ent->client->sess.fullAdmin || ent->client->sess.juniorAdmin)
+	{ 
+		ent->client->sess.fullAdmin = qfalse;
+		ent->client->sess.juniorAdmin = qfalse;
+		trap->SendServerCommand( ent-g_entities, "print \"You are no longer an admin.\n\"");         
+	}
+}
+//[JAPRO - Serverside - All - Amlogout Function - End]
+
+//[JAPRO - Serverside - All - Amtele Function - Start]
+void Cmd_Amtele_f(gentity_t *ent)
+{
+	gentity_t	*teleporter;// = NULL;
+	char client1[MAX_NETNAME], client2[MAX_NETNAME];
+	char x[32], y[32], z[32], yaw[32];
+	int clientid1 = -1, clientid2 = -1;
+	vec3_t	angles = {0, 0, 0}, origin;
+	qboolean droptofloor = qfalse, race = qfalse;
+
+	if (!ent->client)
+		return;
+
+	if (ent->client->sess.fullAdmin)//Logged in as full admin
+	{
+		if (!(g_fullAdminLevel.integer & (1 << A_ADMINTELE)))
+		{
+				trap->SendServerCommand( ent-g_entities, "print \"You are not authorized to use this command (amTele).\n\"" );
+			return;
+		}
+	}
+	else if (ent->client->sess.juniorAdmin)//Logged in as junior admin
+	{
+		if (!(g_juniorAdminLevel.integer & (1 << A_ADMINTELE)))
+		{
+				trap->SendServerCommand( ent-g_entities, "print \"You are not authorized to use this command (amTele).\n\"" );
+			return;
+		}
+	}
+	else  //Not logged in
+	{
+			trap->SendServerCommand( ent-g_entities, "print \"You must be logged in to use this command (amTele).\n\"" );
+		return;	
+	}
+
+	if (trap->Argc() > 6)
+	{
+		trap->SendServerCommand( ent-g_entities, "print \"Usage: /amTele or /amTele <client> or /amTele <client> <client> or /amTele <X> <Y> <Z> <YAW> or /amTele <player> <X> <Y> <Z> <YAW>.\n\"" );
+		return;
+	}
+		
+	if (trap->Argc() == 1)//Amtele to telemark
+	{ 
+		if (ent->client->pers.telemarkOrigin[0] != 0 || ent->client->pers.telemarkOrigin[1] != 0 || ent->client->pers.telemarkOrigin[2] != 0 || ent->client->pers.telemarkAngle != 0)
+		{
+			angles[YAW] = ent->client->pers.telemarkAngle;
+			angles[PITCH] = ent->client->pers.telemarkPitchAngle;
+			AmTeleportPlayer( ent, ent->client->pers.telemarkOrigin, angles, droptofloor, race );
+		}
+		else
+			trap->SendServerCommand( ent-g_entities, "print \"No telemark set!\n\"" );
+		return;
+	}
+
+	if (trap->Argc() == 2)//Amtele to player
+	{ 
+		trap->Argv(1, client1, sizeof(client1));
+		clientid1 = JP_ClientNumberFromString(ent, client1);
+
+		if (clientid1 == -1 || clientid1 == -2)  
+			return; 
+
+		origin[0] = g_entities[clientid1].client->ps.origin[0];
+		origin[1] = g_entities[clientid1].client->ps.origin[1];
+		origin[2] = g_entities[clientid1].client->ps.origin[2] + 96;
+		AmTeleportPlayer( ent, origin, angles, droptofloor, race );
+		return;
+	}
+
+	if (trap->Argc() == 3)//Amtele player to player
+	{ 
+		trap->Argv(1, client1, sizeof(client1));
+		trap->Argv(2, client2, sizeof(client2));
+		clientid1 = JP_ClientNumberFromString(ent, client1);
+		clientid2 = JP_ClientNumberFromString(ent, client2);
+
+		if (clientid1 == -1 || clientid1 == -2 || clientid2 == -1 || clientid2 == -2)  
+			return; 
+
+		if ((g_entities[clientid1].client && (g_entities[clientid1].client->sess.fullAdmin)) || (ent->client->sess.juniorAdmin && g_entities[clientid1].client->sess.juniorAdmin))//He has admin
+		{
+			if (g_entities[clientid1].client->ps.clientNum != ent->client->ps.clientNum)//Hes not me
+			{
+				trap->SendServerCommand( ent-g_entities, "print \"You are not authorized to use this command on this player (amTele).\n\"" );
+				return;
+			}
+		}
+		
+		teleporter = &g_entities[clientid1];
+
+		origin[0] = g_entities[clientid2].client->ps.origin[0];
+		origin[1] = g_entities[clientid2].client->ps.origin[1];
+		origin[2] = g_entities[clientid2].client->ps.origin[2] + 96;
+
+		AmTeleportPlayer( teleporter, origin, angles, droptofloor, qfalse );
+		return;
+	}
+
+	if (trap->Argc() == 4)//|| trap->Argc() == 5)//Amtele to origin (if no angle specified, default 0?)
+	{ 
+		trap->Argv(1, x, sizeof(x));
+		trap->Argv(2, y, sizeof(y));
+		trap->Argv(3, z, sizeof(z));
+
+		origin[0] = atoi(x);
+		origin[1] = atoi(y);
+		origin[2] = atoi(z);
+
+		/*if (trap->Argc() == 5)
+		{
+			trap->Argv(4, yaw, sizeof(yaw));
+			angles[YAW] = atoi(yaw);
+		}*/
+			
+		AmTeleportPlayer( ent, origin, angles, droptofloor, race );
+		return;
+	}
+
+	if (trap->Argc() == 5)//Amtele to angles + origin, OR Amtele player to origin
+	{
+		trap->Argv(1, client1, sizeof(client1));
+		clientid1 = JP_ClientNumberFromString(ent, client1);
+
+		if (clientid1 == -1 || clientid1 == -2)//Amtele to origin + angles
+		{
+			trap->Argv(1, x, sizeof(x));
+			trap->Argv(2, y, sizeof(y));
+			trap->Argv(3, z, sizeof(z));
+
+			origin[0] = atoi(x);
+			origin[1] = atoi(y);
+			origin[2] = atoi(z);
+
+			trap->Argv(4, yaw, sizeof(yaw));
+			angles[YAW] = atoi(yaw);
+			
+			AmTeleportPlayer( ent, origin, angles, droptofloor, race );
+		}
+
+		else//Amtele other player to origin
+		{
+			if ((g_entities[clientid1].client && (g_entities[clientid1].client->sess.fullAdmin)) || (ent->client->sess.juniorAdmin && g_entities[clientid1].client->sess.juniorAdmin))//He has admin
+			{	
+				if (g_entities[clientid1].client->ps.clientNum != ent->client->ps.clientNum)//Hes not me
+				{
+					trap->SendServerCommand( ent-g_entities, "print \"You are not authorized to use this command on this player (amTele).\n\"" );
+					return;
+				}
+			}
+
+			teleporter = &g_entities[clientid1];
+
+			trap->Argv(2, x, sizeof(x));
+			trap->Argv(3, y, sizeof(y));
+			trap->Argv(4, z, sizeof(z));
+
+			origin[0] = atoi(x);
+			origin[1] = atoi(y);
+			origin[2] = atoi(z);
+
+			AmTeleportPlayer( teleporter, origin, angles, droptofloor, qfalse );
+		}
+		return;
+
+	}
+
+	if (trap->Argc() == 6)//Amtele player to angles + origin
+	{
+		trap->Argv(1, client1, sizeof(client1));
+		clientid1 = JP_ClientNumberFromString(ent, client1);
+
+		if (clientid1 == -1 || clientid1 == -2)
+			return;
+
+		if ((g_entities[clientid1].client && (g_entities[clientid1].client->sess.fullAdmin)) || (ent->client->sess.juniorAdmin && g_entities[clientid1].client->sess.juniorAdmin))//He has admin
+		{
+			if (g_entities[clientid1].client->ps.clientNum != ent->client->ps.clientNum)//Hes not me
+			{
+				trap->SendServerCommand( ent-g_entities, "print \"You are not authorized to use this command on this player (amTele).\n\"" );
+				return;
+			}
+		}
+		
+		teleporter = &g_entities[clientid1];
+
+		trap->Argv(2, x, sizeof(x));
+		trap->Argv(3, y, sizeof(y));
+		trap->Argv(4, z, sizeof(z));
+
+		origin[0] = atoi(x);
+		origin[1] = atoi(y);
+		origin[2] = atoi(z);
+
+		trap->Argv(5, yaw, sizeof(yaw));
+		angles[YAW] = atoi(yaw);
+			
+		AmTeleportPlayer( teleporter, origin, angles, droptofloor, qfalse );
+		return;
+	}
+
+}
+//[JAPRO - Serverside - All - Amtele Function - End]
+
+//[JAPRO - Serverside - All - Amtelemark Function - Start]
+void Cmd_Amtelemark_f(gentity_t *ent)
+{
+		if (!ent->client)
+			return;
+		/*(
+		if (ent->client && ent->client->ps.duelInProgress) {
+			gentity_t *duelAgainst = &g_entities[ent->client->ps.duelIndex];
+			if (duelAgainst->client && duelAgainst->client->pers.lastUserName[0]) {
+				trap->SendServerCommand( ent-g_entities, va("print \"You are not authorized to use this command (amtele) in ranked duels.\n\"") );
+				return; //Dont allow amtele in ranked duels ever..
+			}
+		}
+		*/
+		/*
+		if (ent->client->sess.sessionTeam == TEAM_SPECTATOR) { //Ehh. bandaid fix to stop a lot of potential abuse.. droptoground fixes this?
+			trap->SendServerCommand( ent-g_entities, "print \"You must be ingame to use this command (amTelemark).\n\"" ); 
+			return;
+		}
+		*/
+
+		VectorCopy(ent->client->ps.origin, ent->client->pers.telemarkOrigin);
+		if (ent->client->sess.sessionTeam == TEAM_SPECTATOR && (ent->client->ps.pm_flags & PMF_FOLLOW))
+			ent->client->pers.telemarkOrigin[2] += 58;
+		ent->client->pers.telemarkAngle = ent->client->ps.viewangles[YAW];
+		ent->client->pers.telemarkPitchAngle = ent->client->ps.viewangles[PITCH];
+		trap->SendServerCommand( ent-g_entities, va("print \"Teleport Marker: ^3<%i, %i, %i> %i, %i\n\"", 
+			(int)ent->client->pers.telemarkOrigin[0], (int)ent->client->pers.telemarkOrigin[1], (int)ent->client->pers.telemarkOrigin[2], (int)ent->client->pers.telemarkAngle, (int)ent->client->pers.telemarkPitchAngle ));
+}
+//[JAPRO - Serverside - All - Amtelemark Function - End]
+
+

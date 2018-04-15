@@ -255,6 +255,101 @@ void TeleportPlayer( gentity_t *player, vec3_t origin, vec3_t angles ) {
 	}
 }
 
+//JAPRO - Serverside - New teleport Function - Start
+void AmTeleportPlayer( gentity_t *player, vec3_t origin, vec3_t angles, qboolean droptofloor, qboolean race ) {
+	gentity_t	*tent;
+	qboolean wasNoClip = qfalse;
+	vec3_t neworigin;
+
+	if (!player || !player->client)
+		return;
+	if (BG_InRoll(&player->client->ps, player->s.legsAnim))//is this crashing? if ps is null or something?
+		return;
+
+#if _GRAPPLE
+	if (player->client && player->client->hook)
+		Weapon_HookFree(player->client->hook);
+#endif
+
+	neworigin[0] = origin[0];
+	neworigin[1] = origin[1];
+	neworigin[2] = origin[2];
+
+	if (player->client->noclip)
+		wasNoClip = qtrue;
+
+	player->client->noclip = qtrue;
+	player->client->ps.fd.forceJumpZStart = -65536; //maybe this will fix that annoying overbounce tele shit
+
+	if (droptofloor) {
+		trace_t tr;
+		vec3_t down, mins, maxs;
+		VectorSet(mins, -15, -15, DEFAULT_MINS_2);
+		VectorSet(maxs, 15, 15, DEFAULT_MAXS_2);
+
+		VectorCopy(origin, down);//Drop them to floor so they cant abuse?
+		down[2] -= 32768;
+		JP_Trace(&tr, origin, mins, maxs, down, player->client->ps.clientNum, MASK_PLAYERSOLID, qfalse, 0, 0);
+		neworigin[2] = (int)tr.endpos[2];//Why does it crash without casting to int? wtf
+
+		player->client->lastInStartTrigger = level.time;
+	}
+
+	// use temp events at source and destination to prevent the effect
+	// from getting dropped by a second player event
+	if ( player->client->sess.sessionTeam != TEAM_SPECTATOR && !race) {
+		tent = G_TempEntity( player->client->ps.origin, EV_PLAYER_TELEPORT_OUT );
+		tent->s.clientNum = player->s.clientNum;
+
+		tent = G_TempEntity( neworigin, EV_PLAYER_TELEPORT_IN );
+		tent->s.clientNum = player->s.clientNum;
+	}
+
+	// unlink to make sure it can't possibly interfere with G_KillBox
+	trap->UnlinkEntity ((sharedEntity_t *)player);
+
+	if (player->client->ps.m_iVehicleNum) {	
+		gentity_t *currentVeh = &g_entities[player->client->ps.m_iVehicleNum];
+		if (currentVeh->client) {
+			currentVeh->m_pVehicle->m_iTurboTime = 0;
+			VectorCopy ( neworigin, currentVeh->client->ps.origin );
+			currentVeh->client->ps.origin[2] += 8;//Get rid of weird jitteryness after teleporting on ground
+			VectorClear(currentVeh->client->ps.velocity);
+			currentVeh->client->ps.speed = 0; //stop it from sliding after we tele
+		}
+		VectorCopy(angles, currentVeh->m_pVehicle->m_vOrientation);
+	}
+	else {
+		VectorCopy ( neworigin, player->client->ps.origin );
+		player->client->ps.origin[2] += 8;//Get rid of weird jitteryness after teleporting on ground
+		VectorClear(player->client->ps.velocity);
+	}
+
+	// toggle the teleport bit so the client knows to not lerp
+	player->client->ps.eFlags ^= EF_TELEPORT_BIT;
+
+	// kill anything at the destination
+	if ( player->client->sess.sessionTeam != TEAM_SPECTATOR ) {
+		G_KillBox (player);
+	}
+
+	// set angles
+	SetClientViewAngle( player, angles );
+
+	// save results of pmove
+	BG_PlayerStateToEntityState( &player->client->ps, &player->s, qtrue );
+
+	// use the precise origin for linking
+	VectorCopy( player->client->ps.origin, player->r.currentOrigin );
+
+	if ( player->client->sess.sessionTeam != TEAM_SPECTATOR ) {
+		trap->LinkEntity ((sharedEntity_t *)player);
+	}
+
+	if (!wasNoClip)
+		player->client->noclip = qfalse;
+}
+//JAPRO - Serverside - New teleport Function - End
 
 /*QUAKED misc_teleporter_dest (1 0 0) (-32 -32 -24) (32 32 -16)
 Point teleporters at these.
