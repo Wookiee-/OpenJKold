@@ -3522,121 +3522,6 @@ void Cmd_AddBot_f( gentity_t *ent ) {
 	trap->SendServerCommand( ent-g_entities, va( "print \"%s.\n\"", G_GetStringEdString( "MP_SVGAME", "ONLY_ADD_BOTS_AS_SERVER" ) ) );
 }
 
-/*
-=================
-ClientCommand
-=================
-*/
-
-#define CMD_NOINTERMISSION		(1<<0)
-#define CMD_CHEAT				(1<<1)
-#define CMD_ALIVE				(1<<2)
-
-typedef struct command_s {
-	const char	*name;
-	void		(*func)(gentity_t *ent);
-	int			flags;
-} command_t;
-
-int cmdcmp( const void *a, const void *b ) {
-	return Q_stricmp( (const char *)a, ((command_t*)b)->name );
-}
-
-command_t commands[] = {
-	{ "addbot",				Cmd_AddBot_f,				0 },
-	{ "callteamvote",		Cmd_CallTeamVote_f,			CMD_NOINTERMISSION },
-	{ "callvote",			Cmd_CallVote_f,				CMD_NOINTERMISSION },
-	{ "debugBMove_Back",	Cmd_BotMoveBack_f,			CMD_CHEAT|CMD_ALIVE },
-	{ "debugBMove_Forward",	Cmd_BotMoveForward_f,		CMD_CHEAT|CMD_ALIVE },
-	{ "debugBMove_Left",	Cmd_BotMoveLeft_f,			CMD_CHEAT|CMD_ALIVE },
-	{ "debugBMove_Right",	Cmd_BotMoveRight_f,			CMD_CHEAT|CMD_ALIVE },
-	{ "debugBMove_Up",		Cmd_BotMoveUp_f,			CMD_CHEAT|CMD_ALIVE },
-	{ "duelteam",			Cmd_DuelTeam_f,				CMD_NOINTERMISSION },
-	{ "follow",				Cmd_Follow_f,				CMD_NOINTERMISSION },
-	{ "follownext",			Cmd_FollowNext_f,			CMD_NOINTERMISSION },
-	{ "followprev",			Cmd_FollowPrev_f,			CMD_NOINTERMISSION },
-	{ "forcechanged",		Cmd_ForceChanged_f,			0 },
-	{ "gc",					Cmd_GameCommand_f,			CMD_NOINTERMISSION },
-	{ "give",				Cmd_Give_f,					CMD_CHEAT|CMD_ALIVE|CMD_NOINTERMISSION },
-	{ "giveother",			Cmd_GiveOther_f,			CMD_CHEAT|CMD_NOINTERMISSION },
-	{ "god",				Cmd_God_f,					CMD_CHEAT|CMD_ALIVE|CMD_NOINTERMISSION },
-	{ "kill",				Cmd_Kill_f,					CMD_ALIVE|CMD_NOINTERMISSION },
-	{ "killother",			Cmd_KillOther_f,			CMD_CHEAT|CMD_NOINTERMISSION },
-//	{ "kylesmash",			TryGrapple,					0 },
-	{ "levelshot",			Cmd_LevelShot_f,			CMD_CHEAT|CMD_ALIVE|CMD_NOINTERMISSION },
-	{ "maplist",			Cmd_MapList_f,				CMD_NOINTERMISSION },
-	{ "noclip",				Cmd_Noclip_f,				CMD_CHEAT|CMD_ALIVE|CMD_NOINTERMISSION },
-	{ "notarget",			Cmd_Notarget_f,				CMD_CHEAT|CMD_ALIVE|CMD_NOINTERMISSION },
-	{ "npc",				Cmd_NPC_f,					CMD_CHEAT|CMD_ALIVE },
-	{ "say",				Cmd_Say_f,					0 },
-	{ "say_team",			Cmd_SayTeam_f,				0 },
-	{ "score",				Cmd_Score_f,				0 },
-	{ "setviewpos",			Cmd_SetViewpos_f,			CMD_CHEAT|CMD_NOINTERMISSION },
-	{ "siegeclass",			Cmd_SiegeClass_f,			CMD_NOINTERMISSION },
-	{ "team",				Cmd_Team_f,					CMD_NOINTERMISSION },
-//	{ "teamtask",			Cmd_TeamTask_f,				CMD_NOINTERMISSION },
-	{ "teamvote",			Cmd_TeamVote_f,				CMD_NOINTERMISSION },
-	{ "tell",				Cmd_Tell_f,					0 },
-	{ "thedestroyer",		Cmd_TheDestroyer_f,			CMD_CHEAT|CMD_ALIVE|CMD_NOINTERMISSION },
-	{ "t_use",				Cmd_TargetUse_f,			CMD_CHEAT|CMD_ALIVE },
-	{ "voice_cmd",			Cmd_VoiceCommand_f,			CMD_NOINTERMISSION },
-	{ "vote",				Cmd_Vote_f,					CMD_NOINTERMISSION },
-	{ "where",				Cmd_Where_f,				CMD_NOINTERMISSION },
-};
-static const size_t numCommands = ARRAY_LEN( commands );
-
-void ClientCommand( int clientNum ) {
-	gentity_t	*ent = NULL;
-	char		cmd[MAX_TOKEN_CHARS] = {0};
-	command_t	*command = NULL;
-
-	ent = g_entities + clientNum;
-	if ( !ent->client || ent->client->pers.connected != CON_CONNECTED ) {
-		G_SecurityLogPrintf( "ClientCommand(%d) without an active connection\n", clientNum );
-		return;		// not fully in game yet
-	}
-
-	trap->Argv( 0, cmd, sizeof( cmd ) );
-
-	//rww - redirect bot commands
-	if ( strstr( cmd, "bot_" ) && AcceptBotCommand( cmd, ent ) )
-		return;
-	//end rww
-
-	command = (command_t *)Q_LinearSearch( cmd, commands, numCommands, sizeof( commands[0] ), cmdcmp );
-	if ( !command )
-	{
-		trap->SendServerCommand( clientNum, va( "print \"Unknown command %s\n\"", cmd ) );
-		return;
-	}
-
-	else if ( (command->flags & CMD_NOINTERMISSION)
-		&& ( level.intermissionQueued || level.intermissiontime ) )
-	{
-		trap->SendServerCommand( clientNum, va( "print \"%s (%s)\n\"", G_GetStringEdString( "MP_SVGAME", "CANNOT_TASK_INTERMISSION" ), cmd ) );
-		return;
-	}
-
-	else if ( (command->flags & CMD_CHEAT)
-		&& !sv_cheats.integer )
-	{
-		trap->SendServerCommand( clientNum, va( "print \"%s\n\"", G_GetStringEdString( "MP_SVGAME", "NOCHEATS" ) ) );
-		return;
-	}
-
-	else if ( (command->flags & CMD_ALIVE)
-		&& (ent->health <= 0
-			|| ent->client->tempSpectate >= level.time
-			|| ent->client->sess.sessionTeam == TEAM_SPECTATOR) )
-	{
-		trap->SendServerCommand( clientNum, va( "print \"%s\n\"", G_GetStringEdString( "MP_SVGAME", "MUSTBEALIVE" ) ) );
-		return;
-	}
-
-	else
-		command->func( ent );
-}
-
 //[JAPRO - Serverside - All - Amlogin Function - Start]
 /*
 =================
@@ -3949,5 +3834,126 @@ void Cmd_Amtelemark_f(gentity_t *ent)
 			(int)ent->client->pers.telemarkOrigin[0], (int)ent->client->pers.telemarkOrigin[1], (int)ent->client->pers.telemarkOrigin[2], (int)ent->client->pers.telemarkAngle, (int)ent->client->pers.telemarkPitchAngle ));
 }
 //[JAPRO - Serverside - All - Amtelemark Function - End]
+
+/*
+=================
+ClientCommand
+=================
+*/
+
+#define CMD_NOINTERMISSION		(1<<0)
+#define CMD_CHEAT				(1<<1)
+#define CMD_ALIVE				(1<<2)
+
+typedef struct command_s {
+	const char	*name;
+	void		(*func)(gentity_t *ent);
+	int			flags;
+} command_t;
+
+int cmdcmp( const void *a, const void *b ) {
+	return Q_stricmp( (const char *)a, ((command_t*)b)->name );
+}
+
+command_t commands[] = {
+	{ "addbot",				Cmd_AddBot_f,				0 },
+	{ "callteamvote",		Cmd_CallTeamVote_f,			CMD_NOINTERMISSION },
+	{ "amlogin",			Cmd_Amlogin_f,				0 },
+	{ "amlogout", 			Cmd_Amlogout_f, 			0 },
+	{ "amtele",				Cmd_Amtele_f,				CMD_NOINTERMISSION },
+	{ "amtelemark", 		Cmd_Amtelemark_f, 			CMD_NOINTERMISSION },	
+	{ "callvote",			Cmd_CallVote_f,				CMD_NOINTERMISSION },
+	{ "debugBMove_Back",	Cmd_BotMoveBack_f,			CMD_CHEAT|CMD_ALIVE },
+	{ "debugBMove_Forward",	Cmd_BotMoveForward_f,		CMD_CHEAT|CMD_ALIVE },
+	{ "debugBMove_Left",	Cmd_BotMoveLeft_f,			CMD_CHEAT|CMD_ALIVE },
+	{ "debugBMove_Right",	Cmd_BotMoveRight_f,			CMD_CHEAT|CMD_ALIVE },
+	{ "debugBMove_Up",		Cmd_BotMoveUp_f,			CMD_CHEAT|CMD_ALIVE },
+	{ "duelteam",			Cmd_DuelTeam_f,				CMD_NOINTERMISSION },
+	{ "follow",				Cmd_Follow_f,				CMD_NOINTERMISSION },
+	{ "follownext",			Cmd_FollowNext_f,			CMD_NOINTERMISSION },
+	{ "followprev",			Cmd_FollowPrev_f,			CMD_NOINTERMISSION },
+	{ "forcechanged",		Cmd_ForceChanged_f,			0 },
+	{ "gc",					Cmd_GameCommand_f,			CMD_NOINTERMISSION },
+	{ "give",				Cmd_Give_f,					CMD_CHEAT|CMD_ALIVE|CMD_NOINTERMISSION },
+	{ "giveother",			Cmd_GiveOther_f,			CMD_CHEAT|CMD_NOINTERMISSION },
+	{ "god",				Cmd_God_f,					CMD_CHEAT|CMD_ALIVE|CMD_NOINTERMISSION },
+	{ "kill",				Cmd_Kill_f,					CMD_ALIVE|CMD_NOINTERMISSION },
+	{ "killother",			Cmd_KillOther_f,			CMD_CHEAT|CMD_NOINTERMISSION },
+//	{ "kylesmash",			TryGrapple,					0 },
+	{ "levelshot",			Cmd_LevelShot_f,			CMD_CHEAT|CMD_ALIVE|CMD_NOINTERMISSION },
+	{ "maplist",			Cmd_MapList_f,				CMD_NOINTERMISSION },
+	{ "noclip",				Cmd_Noclip_f,				CMD_CHEAT|CMD_ALIVE|CMD_NOINTERMISSION },
+	{ "notarget",			Cmd_Notarget_f,				CMD_CHEAT|CMD_ALIVE|CMD_NOINTERMISSION },
+	{ "npc",				Cmd_NPC_f,					CMD_CHEAT|CMD_ALIVE },
+	{ "say",				Cmd_Say_f,					0 },
+	{ "say_team",			Cmd_SayTeam_f,				0 },
+	{ "score",				Cmd_Score_f,				0 },
+	{ "setviewpos",			Cmd_SetViewpos_f,			CMD_CHEAT|CMD_NOINTERMISSION },
+	{ "siegeclass",			Cmd_SiegeClass_f,			CMD_NOINTERMISSION },
+	{ "team",				Cmd_Team_f,					CMD_NOINTERMISSION },
+//	{ "teamtask",			Cmd_TeamTask_f,				CMD_NOINTERMISSION },
+	{ "teamvote",			Cmd_TeamVote_f,				CMD_NOINTERMISSION },
+	{ "tell",				Cmd_Tell_f,					0 },
+	{ "thedestroyer",		Cmd_TheDestroyer_f,			CMD_CHEAT|CMD_ALIVE|CMD_NOINTERMISSION },
+	{ "t_use",				Cmd_TargetUse_f,			CMD_CHEAT|CMD_ALIVE },
+	{ "voice_cmd",			Cmd_VoiceCommand_f,			CMD_NOINTERMISSION },
+	{ "vote",				Cmd_Vote_f,					CMD_NOINTERMISSION },
+	{ "where",				Cmd_Where_f,				CMD_NOINTERMISSION },
+};
+static const size_t numCommands = ARRAY_LEN( commands );
+
+void ClientCommand( int clientNum ) {
+	gentity_t	*ent = NULL;
+	char		cmd[MAX_TOKEN_CHARS] = {0};
+	command_t	*command = NULL;
+
+	ent = g_entities + clientNum;
+	if ( !ent->client || ent->client->pers.connected != CON_CONNECTED ) {
+		G_SecurityLogPrintf( "ClientCommand(%d) without an active connection\n", clientNum );
+		return;		// not fully in game yet
+	}
+
+	trap->Argv( 0, cmd, sizeof( cmd ) );
+
+	//rww - redirect bot commands
+	if ( strstr( cmd, "bot_" ) && AcceptBotCommand( cmd, ent ) )
+		return;
+	//end rww
+
+	command = (command_t *)Q_LinearSearch( cmd, commands, numCommands, sizeof( commands[0] ), cmdcmp );
+	if ( !command )
+	{
+		trap->SendServerCommand( clientNum, va( "print \"Unknown command %s\n\"", cmd ) );
+		return;
+	}
+
+	else if ( (command->flags & CMD_NOINTERMISSION)
+		&& ( level.intermissionQueued || level.intermissiontime ) )
+	{
+		trap->SendServerCommand( clientNum, va( "print \"%s (%s)\n\"", G_GetStringEdString( "MP_SVGAME", "CANNOT_TASK_INTERMISSION" ), cmd ) );
+		return;
+	}
+
+	else if ( (command->flags & CMD_CHEAT)
+		&& !sv_cheats.integer )
+	{
+		trap->SendServerCommand( clientNum, va( "print \"%s\n\"", G_GetStringEdString( "MP_SVGAME", "NOCHEATS" ) ) );
+		return;
+	}
+
+	else if ( (command->flags & CMD_ALIVE)
+		&& (ent->health <= 0
+			|| ent->client->tempSpectate >= level.time
+			|| ent->client->sess.sessionTeam == TEAM_SPECTATOR) )
+	{
+		trap->SendServerCommand( clientNum, va( "print \"%s\n\"", G_GetStringEdString( "MP_SVGAME", "MUSTBEALIVE" ) ) );
+		return;
+	}
+
+	else
+		command->func( ent );
+}
+
+
 
 
