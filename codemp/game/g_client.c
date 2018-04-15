@@ -2742,7 +2742,23 @@ void ClientBegin( int clientNum, qboolean allowTeamReset ) {
 
 	// count current clients and rank for scoreboard
 	CalculateRanks();
+	
+	if (client->sess.sessionTeam != TEAM_SPECTATOR && ent->client->sess.sawMOTD == qfalse)
+	{
+		//char arg1[MAX_STRING_TOKENS];
 
+		//if (!strchr( arg1, ';' ) && !strchr( arg1, '\r' ) && !strchr( arg1, '\n' )) //loda idk
+		if (Q_stricmp(g_consoleMOTD.string, ""))
+			trap->SendServerCommand(ent-g_entities, va("print \"%s\n\"", g_consoleMOTD.string));
+
+		if (Q_stricmp(g_centerMOTD.string, "")) {
+			strcpy(ent->client->csMessage, G_NewString(va("^7%s\n", g_centerMOTD.string )));
+			ent->client->csTimeLeft = g_centerMOTDTime.integer;
+		}
+
+		ent->client->sess.sawMOTD = qtrue;
+	}	
+	
 	G_ClearClientLog(clientNum);
 }
 

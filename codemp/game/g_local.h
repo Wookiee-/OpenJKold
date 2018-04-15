@@ -531,6 +531,7 @@ typedef struct clientSession_s {
 	char		IP[NET_ADDRSTRMAXLEN];
 	qboolean	juniorAdmin;
 	qboolean 	fullAdmin;
+	qboolean 	sawMOTD; // japro has the client been shown the MOTD?	
 	
 } clientSession_t;
 
@@ -859,7 +860,9 @@ struct gclient_s {
 		int		drainDebounce;
 		int		lightningDebounce;
 	} force;
-	int	lastInStartTrigger;	
+	int			lastInStartTrigger;	
+	char		csMessage[MAX_STRING_CHARS];	// JAPRO - Message to say CenterScreen
+	short		csTimeLeft; // JAPRO - Time left for client's CenterScreen	
 };
 
 //Interest points
