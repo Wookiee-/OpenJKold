@@ -7,6 +7,7 @@ This is more or less a lite version of jaPRO with limited commands which aims to
 ## Features 
 
 * Private duels now start with full health and shield, and can be changed via new cvars (g_duelStartHealth and g_duelStartArmor)
+* Private duels the winner is restored to 100/25
 * Results of a private duel are displayed to all, with the remaining health of the winning player
 * ConsoleMOTD and CenterMOTD
 * Sliding on players head on/off
