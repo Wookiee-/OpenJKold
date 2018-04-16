@@ -12,7 +12,7 @@ This is more or less a lite version of jaPRO with limited commands which aims to
 * ConsoleMOTD and CenterMOTD
 * Sliding on players head on/off
 * Duel Distance Limit on/off 
-* Amlogin, Amlogout, Amtele, Amtelemark 
+* Amlogin, Amlogout, Amtele, Amtelemark, Ammap 
 * FullAdmin and JuniorAdmin levels
 * Saber switch command on/off
 
@@ -20,4 +20,4 @@ This is more or less a lite version of jaPRO with limited commands which aims to
 
 Coming Soon
 
-* Ammap, Npc, Amforceteam, Amlockteam
+* Npc, Amforceteam, Amlockteam
