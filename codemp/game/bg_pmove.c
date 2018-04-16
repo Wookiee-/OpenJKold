@@ -1066,6 +1066,19 @@ static void PM_Friction( void ) {
 	// If on a client then there is no friction
 	else if ( pm->ps->groundEntityNum < MAX_CLIENTS )
 	{
+#ifdef _GAME
+		if (g_slideOnPlayer.integer)
+#else
+		if (cgs.isJAPro) {
+			if (cgs.jcinfo & JAPRO_CINFO_HEADSLIDE)
+				drop = 0;
+		}
+		else if (cgs.isJAPlus) {
+			if (cgs.cinfo & JAPLUS_CINFO_HEADSLIDE)
+				drop = 0;
+		}
+		else
+#endif		
 		drop = 0;
 	}
 

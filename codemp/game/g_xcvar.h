@@ -176,9 +176,15 @@ XCVAR_DEF( sv_fps,						"40",			NULL,				CVAR_ARCHIVE|CVAR_SERVERINFO,					qtrue
 XCVAR_DEF( sv_maxclients,				"8",			NULL,				CVAR_SERVERINFO|CVAR_LATCH|CVAR_ARCHIVE,		qfalse )
 XCVAR_DEF( timelimit,					"0",			NULL,				CVAR_SERVERINFO|CVAR_ARCHIVE|CVAR_NORESTART,	qtrue )
 
+XCVAR_DEF( jcinfo, 						"0", 			NULL, 				CVAR_SERVERINFO|CVAR_ROM, 						qtrue ) //not a cvar, dont change it
+
+XCVAR_DEF( g_slideOnPlayer, 			"0", 			CVU_Headslide, 		CVAR_ARCHIVE, 									qtrue )
+
 XCVAR_DEF( g_duelStartHealth,			"0",			NULL,				CVAR_ARCHIVE,									qtrue )
 XCVAR_DEF( g_duelStartArmor, 			"0", 			NULL, 				CVAR_ARCHIVE, 									qtrue )
 XCVAR_DEF( g_duelDistanceLimit, 		"0", 			NULL, 				CVAR_ARCHIVE, 									qtrue )
+
+
 XCVAR_DEF( g_consoleMOTD,				"",				NULL,				CVAR_ARCHIVE,									qfalse )
 XCVAR_DEF( g_centerMOTDTime,			"5",			NULL,				CVAR_ARCHIVE,									qfalse )
 XCVAR_DEF( g_centerMOTD, 				"", 			NULL, 				CVAR_ARCHIVE, 									qfalse )
