@@ -2,7 +2,7 @@
 
 ## Direction of OpenJK Ultimate
 
-This is more or less a lite version of jaPRO with limited commands which aims to have the goal of the no player abuse policy so players can enjoy playing the game. There is a basic admin system with limited commands so players are not abused.
+This is more or less a lite version of jaPRO with limited commands which aims to have the goal of the no player abuse policy so players can enjoy playing the game. There is also a basic admin system so players can tele to players.
 
 ## Features 
 
@@ -14,3 +14,9 @@ This is more or less a lite version of jaPRO with limited commands which aims to
 * amlogin, amlogout, amtele, amtelemark 
 * FullAdmin and JuniorAdmin
 
+##
+
+Coming Soon
+
+* saber command
+* ammap, npc
