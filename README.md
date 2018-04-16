@@ -1,6 +1,6 @@
 # OpenJK Ultimate
 
-# Direction of OpenJK Ultimate
+## Direction of OpenJK Ultimate
 
 This is more or less a lite version of jaPRO which aims to have the goal on non abuse commands so players can enjoy the game. There is a basic admin system with limited commands so players are not abused.
 
