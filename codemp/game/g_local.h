@@ -1120,6 +1120,11 @@ typedef struct level_locals_s {
 	char		*mTargetAdjust;
 
 	char		mTeamFilter[MAX_QPATH];
+	
+	qboolean	isLockedred;			
+	qboolean	isLockedblue;			
+	qboolean	isLockedspec;			
+	qboolean isLockedfree; 	
 
 	struct {
 		fileHandle_t	log;

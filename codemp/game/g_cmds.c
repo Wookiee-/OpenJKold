@@ -811,46 +811,77 @@ void SetTeam( gentity_t *ent, char *s ) {
 	specClient = 0;
 	specState = SPECTATOR_NOT;
 	if ( !Q_stricmp( s, "scoreboard" ) || !Q_stricmp( s, "score" )  ) {
+		if(level.isLockedspec)
+		{
+				trap->SendServerCommand( ent->client->ps.clientNum, va("print \"^7The ^3Spectator ^7Access has been locked!\n\""));
+				return;
+		}
 		team = TEAM_SPECTATOR;
 		specState = SPECTATOR_FREE; // SPECTATOR_SCOREBOARD disabling this for now since it is totally broken on client side
-	} else if ( !Q_stricmp( s, "follow1" ) ) {
+		} else if ( !Q_stricmp( s, "follow1" ) ) {
+		if(level.isLockedspec)
+		{
+				trap->SendServerCommand( ent->client->ps.clientNum, va("print \"^7The ^3Spectator ^7Access has been locked!\n\""));
+				return;
+		}
 		team = TEAM_SPECTATOR;
 		specState = SPECTATOR_FOLLOW;
 		specClient = -1;
-	} else if ( !Q_stricmp( s, "follow2" ) ) {
+		} else if ( !Q_stricmp( s, "follow2" ) ) {
+		if(level.isLockedspec)
+		{
+				trap->SendServerCommand( ent->client->ps.clientNum, va("print \"^7The ^3Spectator ^7Access has been locked!\n\""));
+				return;
+		}
 		team = TEAM_SPECTATOR;
 		specState = SPECTATOR_FOLLOW;
 		specClient = -2;
-	} else if ( !Q_stricmp( s, "spectator" ) || !Q_stricmp( s, "s" ) ) {
+		} else if ( !Q_stricmp( s, "spectator" ) || !Q_stricmp( s, "s" )  || !Q_stricmp( s, "spectate" ) ) {
+		if(level.isLockedspec)
+		{
+				trap->SendServerCommand( ent->client->ps.clientNum, va("print \"^7The ^3Spectator ^7Access has been locked!\n\""));
+				return;
+		}
 		team = TEAM_SPECTATOR;
 		specState = SPECTATOR_FREE;
 	} else if ( level.gametype >= GT_TEAM ) {
 		// if running a team game, assign player to one of the teams
 		specState = SPECTATOR_NOT;
-		if ( !Q_stricmp( s, "red" ) || !Q_stricmp( s, "r" ) ) {
-			team = TEAM_RED;
-		} else if ( !Q_stricmp( s, "blue" ) || !Q_stricmp( s, "b" ) ) {
-			team = TEAM_BLUE;
-		} else {
-			// pick the team with the least number of players
-			//For now, don't do this. The legalize function will set powers properly now.
-			/*
-			if (g_forceBasedTeams.integer)
+		if ( !Q_stricmp(s, "red") || !Q_stricmp(s, "r"))
+		{
+			if(level.isLockedred)
 			{
-				if (ent->client->ps.fd.forceSide == FORCE_LIGHTSIDE)
-				{
-					team = TEAM_BLUE;
-				}
-				else
-				{
-					team = TEAM_RED;
-				}
+				trap->SendServerCommand( ent->client->ps.clientNum, va("print \"^7The ^1Red ^7team is locked!\n\""));
+				return;
 			}
-			else
+			team = TEAM_RED;
+		} else if (!Q_stricmp(s, "blue") || !Q_stricmp(s, "b"))
+		{
+			if(level.isLockedblue)
 			{
-			*/
+				trap->SendServerCommand( ent->client->ps.clientNum, va("print \"^7The ^4Blue ^7team is locked!\n\""));
+				return;
+			}
+			team = TEAM_BLUE;
+			} else {
+
 				team = PickTeam( clientNum );
-			//}
+				
+				if(team == TEAM_BLUE) {
+					if (level.isLockedblue) {
+						trap->SendServerCommand( ent->client->ps.clientNum, va("print \"^7The ^4Blue ^7team is locked!\n\""));
+						return;
+					}
+
+				}
+				else if(team == TEAM_RED) {
+					if (level.isLockedred) {
+						trap->SendServerCommand( ent->client->ps.clientNum, va("print \"^7The ^1Red ^7team is locked!\n\""));
+						return;
+					}
+
+			}		
+
 		}
 
 		if ( g_teamForceBalance.integer && !g_jediVmerc.integer ) {
@@ -917,6 +948,11 @@ void SetTeam( gentity_t *ent, char *s ) {
 		*/
 
 	} else {
+		if(level.isLockedfree)
+		{
+			trap->SendServerCommand( ent->client->ps.clientNum, va("print \"^7The ^3Free ^7team is locked!\n\""));
+			return;
+		}		
 		// force them to spectators if there aren't any spots free
 		team = TEAM_FREE;
 	}
@@ -3783,6 +3819,246 @@ void Cmd_Amlogout_f(gentity_t *ent)
 }
 //[JAPRO - Serverside - All - Amlogout Function - End]
 
+//[JAPRO - Serverside - All - Amlockteam Function - Start]
+/*
+=================
+Cmd_Amlockteam_f
+=================
+*/
+void Cmd_Amlockteam_f(gentity_t *ent)
+{
+	char teamname[MAX_TEAMNAME];
+
+		if (!ent->client)
+			return;
+
+		if (!CheckAdminCmd(ent, A_LOCKTEAM, "amLockTeam"))
+			return;
+
+		if (level.gametype >= GT_TEAM || level.gametype == GT_FFA)
+		{
+			if (trap->Argc() != 2)
+			{
+				trap->SendServerCommand( ent-g_entities, "print \"Usage: /amLockTeam <team>\n\"");
+				return;
+			}
+
+			trap->Argv( 1, teamname, sizeof( teamname ) );
+				
+			if (!Q_stricmp(teamname, "red") || !Q_stricmp( teamname, "r"))
+			{
+				if (level.isLockedred == qfalse)
+				{
+					level.isLockedred = qtrue;
+					trap->SendServerCommand( -1, "print \"The Red team is now locked.\n\"");
+				}
+				else
+				{
+					level.isLockedred = qfalse;
+					trap->SendServerCommand( -1, "print \"The Red team is now unlocked.\n\"");
+				}
+			}
+			else if (!Q_stricmp( teamname, "blue") || !Q_stricmp(teamname, "b"))
+			{
+				if (level.isLockedblue == qfalse)
+				{
+					level.isLockedblue = qtrue;
+					trap->SendServerCommand( -1, "print \"The Blue team is now locked.\n\"");
+				}
+				else
+				{
+					level.isLockedblue = qfalse;
+					trap->SendServerCommand( -1, "print \"The Blue team is now unlocked.\n\"");
+				}
+			}
+			else if(!Q_stricmp(teamname, "s") || !Q_stricmp( teamname, "spectator") || !Q_stricmp(teamname, "spec") || !Q_stricmp(teamname, "spectate"))
+			{
+				if (level.isLockedspec == qfalse)
+				{
+					level.isLockedspec = qtrue;
+					trap->SendServerCommand( -1, "print \"The Spectator team is now locked.\n\"");
+				}
+				else
+				{
+					level.isLockedspec = qfalse;
+					trap->SendServerCommand( -1, "print \"The spectator team is now unlocked.\n\"");
+				}
+			}
+			else if(!Q_stricmp(teamname, "f") || !Q_stricmp(teamname, "free") || !Q_stricmp(teamname, "join") || !Q_stricmp(teamname, "enter") || !Q_stricmp(teamname, "j"))
+			{
+				if (level.isLockedfree == qfalse)
+				{
+					level.isLockedfree = qtrue;
+					trap->SendServerCommand( -1, "print \"The Free team is now locked.\n\"");
+				}
+				else
+				{
+					level.isLockedfree = qfalse;
+					trap->SendServerCommand( -1, "print \"The Free team is now unlocked.\n\"");
+				}
+			}
+			else
+			{
+				trap->SendServerCommand( ent-g_entities, "print \"Usage: /amLockTeam <team>\n\"");
+				return;
+			}
+		}
+		else
+		{
+			trap->SendServerCommand( ent-g_entities, "print \"You can not use this command in this gametype (amLockTeam).\n\"" );
+			return;
+		}
+}
+//[JAPRO - Serverside - All - Amlockteam Function - End]
+
+
+//[JAPRO - Serverside - All - Amforceteam Function - Start]
+/*
+=================
+Cmd_Amforceteam_f
+=================
+*/
+void Cmd_Amforceteam_f(gentity_t *ent)
+{
+		char arg[MAX_NETNAME]; 
+		char teamname[MAX_TEAMNAME];
+		int  clientid = 0;//stfu compiler
+
+		if (!CheckAdminCmd(ent, A_FORCETEAM, "amForceTeam"))
+			return;
+
+		if (trap->Argc() != 3) 
+        { 
+            trap->SendServerCommand( ent-g_entities, "print \"Usage: amForceTeam <client> <team>\n\"" ); 
+            return; 
+        }
+
+		if (level.gametype >= GT_TEAM || level.gametype == GT_FFA)
+		{	
+			qboolean everyone = qfalse;
+			gclient_t *client;
+			int i;
+
+			trap->Argv(1, arg, sizeof(arg));
+
+			if (!Q_stricmp(arg, "-1"))
+				everyone = qtrue;
+
+			if (!everyone)
+			{
+				clientid = JP_ClientNumberFromString(ent, arg);
+
+				if (clientid == -1 || clientid == -2)//No clients or multiple clients are a match
+				{ 
+					return; 
+				} 
+
+
+				if ((g_entities[clientid].client && (g_entities[clientid].client->sess.fullAdmin)) || (ent->client->sess.juniorAdmin && g_entities[clientid].client->sess.juniorAdmin))
+				{
+					if (g_entities[clientid].client->ps.clientNum != ent->client->ps.clientNum)
+						return;
+					else
+						trap->SendServerCommand( ent-g_entities, "print \"You are not authorized to use this command on this player (amForceTeam).\n\"" );
+				}
+			}
+
+			trap->Argv(2, teamname, sizeof(teamname));
+
+			if ((!Q_stricmp(teamname, "red") || !Q_stricmp(teamname, "r")) && level.gametype >= GT_TEAM)
+			{
+				if (everyone)
+				{
+					for (i = 0, client = level.clients; i < level.maxclients; ++i, ++client)
+					{
+						if (client->pers.connected != CON_CONNECTED)//client->sess.sessionTeam
+							continue;
+						if (client->sess.sessionTeam != TEAM_RED)
+							SetTeam(&g_entities[i], "red" );
+					}
+				}
+				else
+				{
+					if (g_entities[clientid].client->sess.sessionTeam != TEAM_RED) {
+						SetTeam(&g_entities[clientid], "red" );
+						trap->SendServerCommand( -1, va("print \"%s ^7has been forced to the ^1Red ^7team.\n\"", g_entities[clientid].client->pers.netname));
+					}
+				}
+			}
+			else if ((!Q_stricmp(teamname, "blue") || !Q_stricmp( teamname, "b")) && level.gametype >= GT_TEAM)
+			{
+				if (everyone)
+				{
+					for (i = 0, client = level.clients; i < level.maxclients; ++i, ++client)
+					{
+						if (client->pers.connected != CON_CONNECTED)//client->sess.sessionTeam
+							continue;
+						if (client->sess.sessionTeam != TEAM_BLUE)
+							SetTeam(&g_entities[i], "blue" );
+					}
+				}
+				else
+				{
+					if (g_entities[clientid].client->sess.sessionTeam != TEAM_BLUE) {
+						SetTeam(&g_entities[clientid], "blue" );
+						trap->SendServerCommand( -1, va("print \"%s ^7has been forced to the ^4Blue ^7team.\n\"", g_entities[clientid].client->pers.netname));
+					}
+				}
+			}
+			else if (!Q_stricmp( teamname, "s") || !Q_stricmp(teamname, "spectator")  || !Q_stricmp(teamname, "spec") || !Q_stricmp(teamname, "spectate"))
+			{
+				if (everyone)
+				{
+					for (i = 0, client = level.clients; i < level.maxclients; ++i, ++client)
+					{
+						if (client->pers.connected != CON_CONNECTED)//client->sess.sessionTeam
+							continue;
+						if (client->sess.sessionTeam != TEAM_SPECTATOR)
+							SetTeam(&g_entities[i], "spectator" );
+					}
+				}
+				else
+				{
+					if (g_entities[clientid].client->sess.sessionTeam != TEAM_SPECTATOR) {
+						SetTeam(&g_entities[clientid], "spectator" );
+						trap->SendServerCommand( -1, va("print \"%s ^7has been forced to the ^3Spectator ^7team.\n\"", g_entities[clientid].client->pers.netname));
+					}
+				}
+			}
+			else if (!Q_stricmp( teamname, "f") || !Q_stricmp( teamname, "free") || !Q_stricmp(teamname, "join") || !Q_stricmp(teamname, "j") || !Q_stricmp(teamname, "enter"))
+			{
+				if (everyone)
+				{
+					for (i = 0, client = level.clients; i < level.maxclients; ++i, ++client)
+					{
+						if (client->pers.connected != CON_CONNECTED)//client->sess.sessionTeam
+							continue;
+						if (client->sess.sessionTeam != TEAM_FREE)
+							SetTeam(&g_entities[i], "free" );
+					}
+				}
+				else
+				{
+					if (g_entities[clientid].client->sess.sessionTeam != TEAM_FREE) {
+						SetTeam(&g_entities[clientid], "free");
+						trap->SendServerCommand( -1, va("print \"%s ^7has been forced to the ^2Free ^7team.\n\"", g_entities[clientid].client->pers.netname));
+					}
+				}
+			}
+			else
+			{
+				trap->SendServerCommand( ent-g_entities, "print \"Usage: amForceTeam <client> <team>\n\"" ); 
+			}
+		}
+		else
+		{
+			trap->SendServerCommand( ent-g_entities, "print \"You can not use this command in this gametype (amForceTeam).\n\"" );
+			return;
+		}
+}
+//[JAPRO - Serverside - All - Amforceteam Function - End]
+
+
 //[JAPRO - Serverside - All - Amtele Function - Start]
 void Cmd_Amtele_f(gentity_t *ent)
 {
@@ -4041,6 +4317,8 @@ command_t commands[] = {
 	{ "addbot",				Cmd_AddBot_f,				0 },
 	{ "callteamvote",		Cmd_CallTeamVote_f,			CMD_NOINTERMISSION },
 	{ "amlogin",			Cmd_Amlogin_f,				0 },
+	{ "amforceteam", 		Cmd_Amforceteam_f, 			CMD_NOINTERMISSION },
+	{ "amlockteam", 		Cmd_Amlockteam_f, 			CMD_NOINTERMISSION },	
 	{ "amlogout", 			Cmd_Amlogout_f, 			0 },
 	{ "ammap", 				Cmd_Ammap_f, 				CMD_NOINTERMISSION },	
 	{ "amtele",				Cmd_Amtele_f,				CMD_NOINTERMISSION },
