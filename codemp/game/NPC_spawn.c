@@ -4255,19 +4255,72 @@ void NPC_PrintScore( gentity_t *ent )
 	Com_Printf( "%s: %d\n", ent->targetname, ent->client->ps.persistant[PERS_SCORE] );
 }
 
+static qboolean CheckAdminCmd(gentity_t *ent, int command, char *commandString) {
+	if (!ent || !ent->client)
+		return qfalse;
+
+	if (ent->client && ent->client->sess.fullAdmin) {//Logged in as full admin
+		if (!(g_fullAdminLevel.integer & (1 << command))) {
+			trap->SendServerCommand( ent-g_entities, va("print \"You are not authorized to use this command (%s).\n\"", commandString ));
+			return qfalse;
+		}
+	}
+	else if (ent->client && ent->client->sess.juniorAdmin) {//Logged in as junior admin
+		if (!(g_juniorAdminLevel.integer & (1 << command))) {
+			trap->SendServerCommand( ent-g_entities, va("print \"You are not authorized to use this command (%s).\n\"", commandString));
+			return qfalse;
+		}
+	}
+	else {//Not logged in
+		trap->SendServerCommand( ent-g_entities, va("print \"You must be logged in to use this command (%s).\n\"", commandString) );
+		return qfalse;
+	}
+	return qtrue;
+}
+
 /*
 Svcmd_NPC_f
-
 parse and dispatch bot commands
 */
 qboolean	showBBoxes = qfalse;
-void Cmd_NPC_f( gentity_t *ent )
+void Cmd_NPC_f( gentity_t *ent ) 
 {
 	char	cmd[1024];
 
+	if (!ent->client)
+		return;
+	
+	if (!CheckAdminCmd(ent, A_NPC, "npc"))
+		 return;
+	
+	/*
+	if (ent->client->sess.fullAdmin)//Logged in as full admin
+	{
+		if (!(g_fullAdminLevel.integer & (1 << A_NPC)))
+		{
+			trap->SendServerCommand( ent-g_entities, "print \"You are not authorized to use this command (npc).\n\"" );
+			return;
+		}
+	}
+	else if (ent->client->sess.juniorAdmin)//Logged in as junior admin
+	{
+		if (!(g_juniorAdminLevel.integer & (1 << A_NPC)))
+		{
+			trap->SendServerCommand( ent-g_entities, "print \"You are not authorized to use this command (npc).\n\"" );
+			return;
+		}
+	} 
+	
+	else if (!sv_cheats.integer)
+	{
+		trap->SendServerCommand( ent-g_entities, "print \"Cheats are not enabled. You must be logged in to use this command (npc).\n\"" );//replaces "Cheats are not enabled on this server." msg
+		return;
+	}
+	*/
+	
 	trap->Argv( 1, cmd, 1024 );
 
-	if ( !cmd[0] )
+	if ( !cmd[0] ) 
 	{
 		Com_Printf( "Valid NPC commands are:\n" );
 		Com_Printf( " spawn [NPC type (from NPCs.cfg)]\n" );
@@ -4279,7 +4332,7 @@ void Cmd_NPC_f( gentity_t *ent )
 	{
 		NPC_Spawn_f( ent );
 	}
-	else if ( Q_stricmp( cmd, "kill" ) == 0 )
+	else if ( Q_stricmp( cmd, "kill" ) == 0 ) 
 	{
 		NPC_Kill_f();
 	}

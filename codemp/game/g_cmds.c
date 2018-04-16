@@ -4067,7 +4067,7 @@ command_t commands[] = {
 	{ "maplist",			Cmd_MapList_f,				CMD_NOINTERMISSION },
 	{ "noclip",				Cmd_Noclip_f,				CMD_CHEAT|CMD_ALIVE|CMD_NOINTERMISSION },
 	{ "notarget",			Cmd_Notarget_f,				CMD_CHEAT|CMD_ALIVE|CMD_NOINTERMISSION },
-	{ "npc",				Cmd_NPC_f,					CMD_CHEAT|CMD_ALIVE },
+	{ "npc", 				Cmd_NPC_f, 					0 },//removed cheat for admin //meh let us npc kill all from spec
 	{ "saber", 				Cmd_Saber_f, 				CMD_NOINTERMISSION },	
 	{ "say",				Cmd_Say_f,					0 },
 	{ "say_team",			Cmd_SayTeam_f,				0 },
