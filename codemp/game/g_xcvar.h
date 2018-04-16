@@ -178,6 +178,7 @@ XCVAR_DEF( timelimit,					"0",			NULL,				CVAR_SERVERINFO|CVAR_ARCHIVE|CVAR_NORE
 
 XCVAR_DEF( g_duelStartHealth,			"0",			NULL,				CVAR_ARCHIVE,									qtrue )
 XCVAR_DEF( g_duelStartArmor, 			"0", 			NULL, 				CVAR_ARCHIVE, 									qtrue )
+XCVAR_DEF( g_duelDistanceLimit, 		"0", 			NULL, 				CVAR_ARCHIVE, 									qtrue )
 XCVAR_DEF( g_consoleMOTD,				"",				NULL,				CVAR_ARCHIVE,									qfalse )
 XCVAR_DEF( g_centerMOTDTime,			"5",			NULL,				CVAR_ARCHIVE,									qfalse )
 XCVAR_DEF( g_centerMOTD, 				"", 			NULL, 				CVAR_ARCHIVE, 									qfalse )
