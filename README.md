@@ -1,4 +1,4 @@
-# OpenJK Ultimate
+# OpenJK Ultimate (Linux Server Side)
 
 ## Direction of OpenJK Ultimate
 
