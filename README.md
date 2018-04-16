@@ -2,7 +2,7 @@
 
 ## Direction of OpenJK Ultimate
 
-This is more or less a lite version of jaPRO with limited commands which aims to have the goal of the no player abuse policy so players can enjoy playing the game. There is also a basic admin system so players can tele to players.
+This is more or less a lite version of jaPRO with limited commands which aims to have the goal of the no player abuse, so players can enjoy playing the game. There is also a basic admin system so players can tele to players.
 
 ## Features 
 
@@ -10,13 +10,13 @@ This is more or less a lite version of jaPRO with limited commands which aims to
 * Results of a private duel are displayed to all, with the remaining health of the winning player
 * ConsoleMOTD and CenterMOTD
 * Sliding on players head on/off
-* Duel Distance Limit 
-* amlogin, amlogout, amtele, amtelemark 
-* FullAdmin and JuniorAdmin
+* Duel Distance Limit on/off 
+* Amlogin, Amlogout, Amtele, Amtelemark 
+* FullAdmin and JuniorAdmin levels
+* Saber switch command on/off
 
 ##
 
 Coming Soon
 
-* saber command
-* ammap, npc
+* Ammap, Npc, Amforceteam, Amlockteam
