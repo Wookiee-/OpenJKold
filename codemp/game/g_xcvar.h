@@ -179,7 +179,7 @@ XCVAR_DEF( timelimit,					"0",			NULL,				CVAR_SERVERINFO|CVAR_ARCHIVE|CVAR_NORE
 XCVAR_DEF( jcinfo, 						"0", 			NULL, 				CVAR_SERVERINFO|CVAR_ROM, 						qtrue ) //not a cvar, dont change it
 
 XCVAR_DEF( g_slideOnPlayer, 			"0", 			CVU_Headslide, 		CVAR_ARCHIVE, 									qtrue )
-
+XCVAR_DEF( g_allowSaberSwitch, 			"0", 			NULL, 				CVAR_ARCHIVE, 									qtrue )
 XCVAR_DEF( g_duelStartHealth,			"0",			NULL,				CVAR_ARCHIVE,									qtrue )
 XCVAR_DEF( g_duelStartArmor, 			"0", 			NULL, 				CVAR_ARCHIVE, 									qtrue )
 XCVAR_DEF( g_duelDistanceLimit, 		"0", 			NULL, 				CVAR_ARCHIVE, 									qtrue )

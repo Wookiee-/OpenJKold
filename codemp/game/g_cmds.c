@@ -33,6 +33,8 @@ int AcceptBotCommand(char *cmd, gentity_t *pl);
 
 void WP_SetSaber( int entNum, saberInfo_t *sabers, int saberNum, const char *saberName );
 
+qboolean G_SaberModelSetup(gentity_t *ent);
+
 void Cmd_NPC_f( gentity_t *ent );
 void SetTeamQuick(gentity_t *ent, int team, qboolean doBegin);
 
@@ -3522,6 +3524,88 @@ void Cmd_AddBot_f( gentity_t *ent ) {
 	trap->SendServerCommand( ent-g_entities, va( "print \"%s.\n\"", G_GetStringEdString( "MP_SVGAME", "ONLY_ADD_BOTS_AS_SERVER" ) ) );
 }
 
+//[JAPRO - Serverside - All - Saber change Function - Start]
+void Cmd_Saber_f(gentity_t *ent)
+{
+	int numSabers;
+	int i;
+	char saberNames[MAX_SABERS][64];
+	char userinfo[MAX_INFO_STRING];
+
+	numSabers = trap->Argc() - 1;
+
+	if (!g_allowSaberSwitch.integer) {
+		trap->SendServerCommand( ent-g_entities, "print \"Command not allowed. (saber).\n\"" );
+		return;
+	}
+
+	if (ent->client->ps.duelInProgress) {
+		trap->SendServerCommand( ent-g_entities, "print \"You are not allowed to use this command during a duel (saber).\n\"" );
+		return;
+	}
+
+	if (level.gametype != GT_FFA) {
+		trap->SendServerCommand( ent-g_entities, "print \"You are only allowed to use this command during the FFA gametype (saber).\n\"" );
+		return;
+	}
+
+	if (level.time - ent->client->ps.footstepTime < 750 
+		|| level.time - ent->client->ps.forceHandExtendTime < 750 
+		|| ent->client->ps.saberMove != LS_READY 
+		|| ent->client->ps.saberInFlight) {
+		trap->SendServerCommand( ent-g_entities, "print \"You must be idle to use this command (saber).\n\"" );
+		return;
+	}
+
+	if (numSabers > MAX_SABERS || numSabers < 1) {
+		trap->SendServerCommand(ent-g_entities, "print \"Usage: /saber <saber1> <saber2 (optional)>.\n\"");
+		return;
+	}
+
+	if (numSabers == 1) {
+		trap->Argv(1, saberNames[0], sizeof(saberNames[0]));
+		strcpy(saberNames[1], "none");
+	} else if (numSabers == 2) {
+		trap->Argv(1, saberNames[0], sizeof(saberNames[0]));
+		trap->Argv(2, saberNames[1], sizeof(saberNames[1]));
+	}
+
+	// update userinfo
+	trap->GetUserinfo(ent-g_entities, userinfo, sizeof(userinfo));
+	for (i = 0; i < MAX_SABERS; i++) {
+		Info_SetValueForKey(userinfo, va("saber%i", i+1), saberNames[i]);
+		G_SetSaber(ent, i, saberNames[i], qfalse);
+	}
+	trap->SetUserinfo(ent-g_entities, userinfo);
+	ClientUserinfoChanged(ent-g_entities);
+
+	G_SaberModelSetup(ent);
+
+	// update saber
+	if (ent->client->saber[0].model[0] && ent->client->saber[1].model[0]) {// dual
+		ent->client->ps.fd.saberAnimLevelBase = ent->client->ps.fd.saberAnimLevel = ent->client->ps.fd.saberDrawAnimLevel = SS_DUAL;
+	} else if (ent->client->saber[0].saberFlags & SFL_TWO_HANDED) {// staff
+		ent->client->ps.fd.saberAnimLevel = ent->client->ps.fd.saberDrawAnimLevel = SS_STAFF;
+	} else {// single
+		if (ent->client->sess.saberLevel < SS_FAST) {
+			ent->client->sess.saberLevel = SS_FAST;
+		} else if (ent->client->sess.saberLevel > SS_STRONG) {
+			ent->client->sess.saberLevel = SS_STRONG;
+		}
+		ent->client->ps.fd.saberAnimLevelBase = ent->client->ps.fd.saberAnimLevel = ent->client->ps.fd.saberDrawAnimLevel = ent->client->sess.saberLevel;
+		if (ent->client->ps.fd.saberAnimLevel > ent->client->ps.fd.forcePowerLevel[FP_SABER_OFFENSE]) {
+			ent->client->ps.fd.saberAnimLevelBase = ent->client->ps.fd.saberAnimLevel = ent->client->ps.fd.saberDrawAnimLevel = ent->client->sess.saberLevel = ent->client->ps.fd.forcePowerLevel[FP_SABER_OFFENSE];
+		}
+	}
+
+	// let's just make sure the styles we chose are cool
+	if (!WP_SaberStyleValidForSaber(&ent->client->saber[0], &ent->client->saber[1], ent->client->ps.saberHolstered, ent->client->ps.fd.saberAnimLevel)) {
+		WP_UseFirstValidSaberStyle( &ent->client->saber[0], &ent->client->saber[1], ent->client->ps.saberHolstered, &ent->client->ps.fd.saberAnimLevel );
+		ent->client->ps.fd.saberAnimLevelBase = ent->client->saberCycleQueue = ent->client->ps.fd.saberAnimLevel;
+	}
+}
+//[JAPRO - Serverside - All - Saber change Function - End]
+
 //[JAPRO - Serverside - All - Amlogin Function - Start]
 /*
 =================
@@ -3885,6 +3969,7 @@ command_t commands[] = {
 	{ "noclip",				Cmd_Noclip_f,				CMD_CHEAT|CMD_ALIVE|CMD_NOINTERMISSION },
 	{ "notarget",			Cmd_Notarget_f,				CMD_CHEAT|CMD_ALIVE|CMD_NOINTERMISSION },
 	{ "npc",				Cmd_NPC_f,					CMD_CHEAT|CMD_ALIVE },
+	{ "saber", 				Cmd_Saber_f, 				CMD_NOINTERMISSION },	
 	{ "say",				Cmd_Say_f,					0 },
 	{ "say_team",			Cmd_SayTeam_f,				0 },
 	{ "score",				Cmd_Score_f,				0 },
