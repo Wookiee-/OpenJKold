@@ -4343,8 +4343,7 @@ void Cmd_Aminfo_f(gentity_t *ent)
 		if ((ent->client->sess.fullAdmin) && (g_fullAdminLevel.integer & (1 << A_LOCKTEAM))) 
 			Q_strcat(buf, sizeof(buf), "amLockTeam "); 
 		else if ((ent->client->sess.juniorAdmin) && (g_juniorAdminLevel.integer & (1 << A_LOCKTEAM))) 
-			Q_strcat(buf, sizeof(buf), "amLockTeam "); 
-			Q_strcat(buf, sizeof(buf), "amVstr "); 
+			Q_strcat(buf, sizeof(buf), "amLockTeam ");  
 		//if ((ent->client->sess.fullAdmin) && (g_fullAdminLevel.integer & (1 << A_STATUS))) 
 			//Q_strcat(buf, sizeof(buf), "amStatus "); 
 		//else if ((ent->client->sess.juniorAdmin) && (g_juniorAdminLevel.integer & (1 << A_STATUS))) 
