@@ -1914,7 +1914,7 @@ static void Cmd_SayTeam_f( gentity_t *ent ) {
 		G_SecurityLogPrintf( "Cmd_SayTeam_f from %d (%s) has been truncated: %s\n", ent->s.number, ent->client->pers.netname, p );
 	}
 
-	G_Say( ent, NULL, (level.gametype>=GT_TEAM) ? SAY_TEAM : SAY_ALL, p );
+	G_Say( ent, NULL, SAY_TEAM, p );
 }
 
 static void Cmd_Clansay_f( gentity_t *ent ) {
