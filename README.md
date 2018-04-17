@@ -2,7 +2,7 @@
 
 ## Direction of jaPRO Lite
 
-This is a lite version of jaPRO with limited commands which aims to have the goal of the no player abuse, so players can enjoy playing the game. There is also a basic admin system so players can tele to players.
+This is a lite version of jaPRO with limited commands which aims to have no admin abuse, so players can enjoy playing the game. There is also a basic admin system so players can tele to players.
 
 ## Features 
 
@@ -30,3 +30,6 @@ This is a lite version of jaPRO with limited commands which aims to have the goa
 
 * Amlogin, Amlogout, Amtele, Amtelemark, Ammap, Npc, Amforceteam, Amlockteam, Aminfo, Amsay, AmStatus
 
+##
+
+* server.cfg link coming soon
