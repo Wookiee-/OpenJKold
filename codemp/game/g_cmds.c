@@ -4473,7 +4473,7 @@ void Cmd_Aminfo_f(gentity_t *ent)
 	if (!ent || !ent->client)
 		return;
 
-	Q_strncpyz(buf, va("^5 Hi there, %s^5. This server is using OpenJK.\n", ent->client->pers.netname), sizeof(buf));
+	Q_strncpyz(buf, va("^5 Hi there, %s^5. This server is using jaPRO Lite.\n", ent->client->pers.netname), sizeof(buf));
 	Q_strcat(buf, sizeof(buf), "   ^3To display server settings, type ^7serverConfig" );
 	trap->SendServerCommand(ent-g_entities, va("print \"%s\n\"", buf));
 	

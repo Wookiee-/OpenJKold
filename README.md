@@ -1,8 +1,8 @@
-# OpenJK Ultimate (Linux Server Side)
+# jaPRO Lite (Linux Server Side)
 
-## Direction of OpenJK Ultimate
+## Direction of jaPRO Lite
 
-This is more or less a lite version of jaPRO with limited commands which aims to have the goal of the no player abuse, so players can enjoy playing the game. There is also a basic admin system so players can tele to players.
+This is a lite version of jaPRO with limited commands which aims to have the goal of the no player abuse, so players can enjoy playing the game. There is also a basic admin system so players can tele to players.
 
 ## Features 
 
@@ -12,15 +12,21 @@ This is more or less a lite version of jaPRO with limited commands which aims to
 * ConsoleMOTD and CenterMOTD
 * Sliding on players head on/off
 * Duel Distance Limit on/off 
-* Amlogin, Amlogout, Amtele, Amtelemark, Ammap, Npc, Amforceteam, Amlockteam, Aminfo
 * FullAdmin and JuniorAdmin levels
-* Saber switch command on/off
-* Serverconfig command
+* Clan chat support for scrims 
 * Clean compile
 
-##
+## Game Commands
 
-Coming Soon
+* Saber switch 
+* Serverconfig
+* AmMotd
 
-* Emotes
-* More admin commands
+## Clan Chat 
+
+* clansay, clanwhois, clanpass, say_team_mod
+
+## Basic Admin System
+
+* Amlogin, Amlogout, Amtele, Amtelemark, Ammap, Npc, Amforceteam, Amlockteam, Aminfo, Amsay, AmStatus
+
