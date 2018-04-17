@@ -15,7 +15,7 @@ This is more or less a lite version of jaPRO with limited commands which aims to
 * Amlogin, Amlogout, Amtele, Amtelemark, Ammap, Npc, Amforceteam, Amlockteam, Aminfo
 * FullAdmin and JuniorAdmin levels
 * Saber switch command on/off
-* Serverconfig
+* Serverconfig command
 * Clean compile
 
 ##
