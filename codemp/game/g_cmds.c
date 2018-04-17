@@ -4267,6 +4267,10 @@ void Cmd_Amtelemark_f(gentity_t *ent)
 {
 		if (!ent->client)
 			return;
+
+		if (!CheckAdminCmd(ent, A_TELEMARK, "amTeleMark"))
+			return;	
+		
 		/*(
 		if (ent->client && ent->client->ps.duelInProgress) {
 			gentity_t *duelAgainst = &g_entities[ent->client->ps.duelIndex];
