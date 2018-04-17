@@ -24,7 +24,7 @@ This is a lite version of jaPRO with limited commands which aims to have the goa
 
 ## Clan Chat 
 
-* clansay, clanwhois, clanpass, say_team_mod
+* Clansay, Clanwhois, Clanpass, Say_Team_Mod
 
 ## Basic Admin System
 
