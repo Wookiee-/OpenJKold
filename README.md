@@ -12,9 +12,11 @@ This is more or less a lite version of jaPRO with limited commands which aims to
 * ConsoleMOTD and CenterMOTD
 * Sliding on players head on/off
 * Duel Distance Limit on/off 
-* Amlogin, Amlogout, Amtele, Amtelemark, Ammap, Npc, Amforceteam, Amlockteam 
+* Amlogin, Amlogout, Amtele, Amtelemark, Ammap, Npc, Amforceteam, Amlockteam, Aminfo
 * FullAdmin and JuniorAdmin levels
 * Saber switch command on/off
+* Serverconfig
+* Clean compile
 
 ##
 
@@ -22,4 +24,3 @@ Coming Soon
 
 * Emotes
 * More admin commands
-* Saber style toggles
