@@ -4315,6 +4315,7 @@ void Cmd_Aminfo_f(gentity_t *ent)
 	trap->SendServerCommand(ent-g_entities, va("print \"%s\n\"", buf));
 
 	Q_strncpyz(buf, "   ^3Game commands: ", sizeof(buf));
+		Q_strcat(buf, sizeof(buf), "amMOTD ");
 	if (g_allowSaberSwitch.integer) 
 		Q_strcat(buf, sizeof(buf), "saber ");
 	trap->SendServerCommand(ent-g_entities, va("print \"%s\n\"", buf));
@@ -4348,10 +4349,10 @@ void Cmd_Aminfo_f(gentity_t *ent)
 			Q_strcat(buf, sizeof(buf), "amLockTeam "); 
 		else if ((ent->client->sess.juniorAdmin) && (g_juniorAdminLevel.integer & (1 << A_LOCKTEAM))) 
 			Q_strcat(buf, sizeof(buf), "amLockTeam ");  
-		//if ((ent->client->sess.fullAdmin) && (g_fullAdminLevel.integer & (1 << A_STATUS))) 
-			//Q_strcat(buf, sizeof(buf), "amStatus "); 
-		//else if ((ent->client->sess.juniorAdmin) && (g_juniorAdminLevel.integer & (1 << A_STATUS))) 
-			//Q_strcat(buf, sizeof(buf), "amStatus "); 
+		if ((ent->client->sess.fullAdmin) && (g_fullAdminLevel.integer & (1 << A_STATUS))) 
+			Q_strcat(buf, sizeof(buf), "amStatus "); 
+		else if ((ent->client->sess.juniorAdmin) && (g_juniorAdminLevel.integer & (1 << A_STATUS))) 
+			Q_strcat(buf, sizeof(buf), "amStatus "); 
 		trap->SendServerCommand(ent-g_entities, va("print \"%s\n\"", buf));
 		buf[0] = '\0';
 	}
@@ -4359,6 +4360,61 @@ void Cmd_Aminfo_f(gentity_t *ent)
 
 }
 //[JAPRO - Serverside - All - Aminfo Function - End]
+
+//[JAPRO - Serverside - All - Amstatus Function - Start]
+
+static void Cmd_Amstatus_f( gentity_t *ent )
+{//Display list of players + clientNum + IP + admin
+	int              i;
+	char             msg[1024-128] = {0};
+	gclient_t        *cl;
+	
+	if (!CheckAdminCmd(ent, A_STATUS, "amStatus"))
+		return;
+			
+	Q_strcat( msg, sizeof( msg ), S_COLOR_CYAN"ID   IP                Plugin    Admin       Name^7\n" );
+	
+	for (i=0; i<MAX_CLIENTS; i++)
+	{//Build a list of clients
+		char *tmpMsg = NULL;
+		if (!g_entities[i].inuse)
+			continue;
+		cl = &level.clients[i];
+		if (cl->pers.netname[0])
+		{
+			char strNum[12] = {0};
+			char strName[MAX_NETNAME] = {0};
+			char strIP[NET_ADDRSTRMAXLEN] = {0};
+			char strAdmin[32] = {0};
+			char strPlugin[32] = {0};
+			char *p = NULL;
+			Q_strncpyz(strNum, va("(%i)", i), sizeof(strNum));
+			Q_strncpyz(strName, cl->pers.netname, sizeof(strName));
+			Q_strncpyz(strIP, cl->sess.IP, sizeof(strIP));
+			p = strchr(strIP, ':');
+			if (p) //loda - fix ip sometimes not printing in amstatus?
+				*p = 0;
+			if (cl->sess.fullAdmin)
+				Q_strncpyz( strAdmin, "^3Full^7", sizeof(strAdmin));
+			else if (cl->sess.juniorAdmin)
+				Q_strncpyz(strAdmin, "^3Junior^7", sizeof(strAdmin));
+			else
+				Q_strncpyz(strAdmin, "^7None^7", sizeof(strAdmin));
+			if (g_entities[i].r.svFlags & SVF_BOT)
+				Q_strncpyz(strPlugin, "^7Bot^7", sizeof(strPlugin));
+			else
+				Q_strncpyz(strPlugin, (cl->pers.isJAPRO) ? "^2Yes^7" : "^1No^7", sizeof(strPlugin));
+				tmpMsg = va( "%-5s%-18s^7%-14s%-16s%s^7\n", strNum, strIP, strPlugin, strAdmin, strName);
+			if (strlen(msg) + strlen(tmpMsg) >= sizeof( msg)) {
+				trap->SendServerCommand( ent-g_entities, va("print \"%s\"", msg));
+				msg[0] = '\0';
+			}
+			Q_strcat(msg, sizeof(msg), tmpMsg);
+		}
+	}
+	trap->SendServerCommand(ent-g_entities, va("print \"%s\"", msg));
+}
+//[JAPRO - Serverside - All - Amstatus Function - End]
 
 //[JAPRO - Serverside - All - Serverconfig - Start]
 void Cmd_ServerConfig_f(gentity_t *ent) //loda fixme fix indenting on this, make standardized
@@ -4389,6 +4445,16 @@ void Cmd_ServerConfig_f(gentity_t *ent) //loda fixme fix indenting on this, make
 //[JAPRO - Serverside - All - Serverconfig - End]
 
 
+void Cmd_Showmotd_f(gentity_t *ent)
+{
+	
+	if (Q_stricmp(g_centerMOTD.string, "" ))
+		strcpy(ent->client->csMessage, G_NewString(va("^7%s\n", g_centerMOTD.string )));//Loda fixme, resize this so it does not allocate more than it needs (game_memory crash eventually?)
+	ent->client->csTimeLeft = g_centerMOTDTime.integer;
+	
+	
+}
+
 /*
 =================
 ClientCommand
@@ -4417,7 +4483,8 @@ command_t commands[] = {
 	{ "aminfo", 			Cmd_Aminfo_f, 				0 },	
 	{ "amlockteam", 		Cmd_Amlockteam_f, 			CMD_NOINTERMISSION },	
 	{ "amlogout", 			Cmd_Amlogout_f, 			0 },
-	{ "ammap", 				Cmd_Ammap_f, 				CMD_NOINTERMISSION },	
+	{ "ammap", 				Cmd_Ammap_f, 				CMD_NOINTERMISSION },
+	{ "amstatus",			Cmd_Amstatus_f,				0 },
 	{ "amtele",				Cmd_Amtele_f,				CMD_NOINTERMISSION },
 	{ "amtelemark", 		Cmd_Amtelemark_f, 			CMD_NOINTERMISSION },	
 	{ "callvote",			Cmd_CallVote_f,				CMD_NOINTERMISSION },
@@ -4448,7 +4515,8 @@ command_t commands[] = {
 	{ "say_team",			Cmd_SayTeam_f,				0 },
 	{ "score",				Cmd_Score_f,				0 },
 	{ "setviewpos",			Cmd_SetViewpos_f,			CMD_CHEAT|CMD_NOINTERMISSION },
-	{ "serverconfig", 		Cmd_ServerConfig_f, 		0 },	
+	{ "serverconfig", 		Cmd_ServerConfig_f, 		0 },
+	{ "ammotd", 			Cmd_Showmotd_f, 			CMD_NOINTERMISSION },	
 	{ "siegeclass",			Cmd_SiegeClass_f,			CMD_NOINTERMISSION },
 	{ "team",				Cmd_Team_f,					CMD_NOINTERMISSION },
 //	{ "teamtask",			Cmd_TeamTask_f,				CMD_NOINTERMISSION },

@@ -260,7 +260,7 @@ typedef enum {
 	A_FORCETEAM,
 	A_LOCKTEAM,
 	A_VSTR,
-	A_SEEIP,
+	A_STATUS,
 	A_RENAME,
 	A_LISTMAPS,
 	A_BUILDHIGHSCORES,
@@ -1124,7 +1124,7 @@ typedef struct level_locals_s {
 	qboolean	isLockedred;			
 	qboolean	isLockedblue;			
 	qboolean	isLockedspec;			
-	qboolean isLockedfree; 	
+	qboolean 	isLockedfree; 	
 
 	struct {
 		fileHandle_t	log;
