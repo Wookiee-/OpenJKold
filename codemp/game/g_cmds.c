@@ -1917,6 +1917,43 @@ static void Cmd_SayTeam_f( gentity_t *ent ) {
 	G_Say( ent, NULL, (level.gametype>=GT_TEAM) ? SAY_TEAM : SAY_ALL, p );
 }
 
+static void Cmd_Clansay_f( gentity_t *ent ) {
+	char *p = NULL;
+
+	if ( trap->Argc () < 2 )
+		return;
+
+	p = ConcatArgs( 1 );
+
+	//Raz: BOF
+	if ( strlen( p ) > MAX_SAY_TEXT )
+	{
+		p[MAX_SAY_TEXT-1] = '\0';
+		G_SecurityLogPrintf( "Cmd_Say_f from %d (%s) has been truncated: %s\n", ent->s.number, ent->client->pers.netname, p );
+	}
+
+	G_Say( ent, NULL, SAY_CLAN, p );
+}
+
+static void Cmd_Amsay_f( gentity_t *ent ) {
+	char *p = NULL;
+
+	if ( trap->Argc () < 2 )
+		return;
+
+	p = ConcatArgs( 1 );
+
+	//Raz: BOF
+	if ( strlen( p ) > MAX_SAY_TEXT )
+	{
+		p[MAX_SAY_TEXT-1] = '\0';
+		G_SecurityLogPrintf( "Cmd_Say_f from %d (%s) has been truncated: %s\n", ent->s.number, ent->client->pers.netname, p );
+	}
+
+	G_Say( ent, NULL, SAY_ADMIN, p );
+}
+
+
 /*
 ==================
 Cmd_Tell_f
@@ -3601,6 +3638,91 @@ void Cmd_AddBot_f( gentity_t *ent ) {
 	trap->SendServerCommand( ent-g_entities, va( "print \"%s.\n\"", G_GetStringEdString( "MP_SVGAME", "ONLY_ADD_BOTS_AS_SERVER" ) ) );
 }
 
+void Cmd_Clanpass_f(gentity_t *ent)
+{
+	char   pass[MAX_STRING_CHARS]; 
+
+	trap->Argv(1, pass, sizeof(pass)); //Password
+
+	if (trap->Argc() == 1) {
+		trap->SendServerCommand( ent-g_entities, "print \"Usage: clanPass <password>\n\"" ); 
+		return; 
+	}
+	if (trap->Argc() == 2) {
+		Q_strncpyz( ent->client->sess.clanpass, pass, sizeof(ent->client->sess.clanpass) );
+	}
+}
+
+void Cmd_SayTeamMod_f(gentity_t *ent)//clanpass
+{
+	char   type[MAX_STRING_CHARS]; 
+
+	trap->Argv(1, type, sizeof(type)); //Type
+
+	if (trap->Argc() == 1) {
+		trap->SendServerCommand( ent-g_entities, "print \"Usage: say_team_mod <normal, clan, or admin>\n\"" ); 
+		return; 
+	}
+	if (trap->Argc() == 2) {
+		if (!Q_stricmp(type, "normal"))
+			ent->client->sess.sayteammod = 0;
+		else if (!Q_stricmp(type, "clan"))
+			ent->client->sess.sayteammod = 1;
+		else if (!Q_stricmp(type, "admin"))
+			ent->client->sess.sayteammod = 2;
+	}
+}
+
+//[JAPRO - Serverside - All - Clanwhois Function - Start]
+/*
+=================
+Cmd_Clanwhois_f
+=================
+*/
+
+void Cmd_Clanwhois_f( gentity_t *ent ) { //Should this only show logged in people..?
+	int			i;
+	char		msg[1024-128] = {0}, clanPass[MAX_QPATH];
+	gclient_t	*cl;
+
+	if (!ent->client)
+		return;
+
+	if (trap->Argc() > 1)//Clanwhois <clanpass>
+		trap->Argv(1, clanPass, sizeof(clanPass));
+	else {//Clanwhois
+		if (!ent->client->sess.clanpass[0])//Normal clanwhois, and we have no clanpass
+			return;
+		Q_strncpyz(clanPass, ent->client->sess.clanpass, sizeof(clanPass));
+	}
+
+	for (i=0; i<MAX_CLIENTS; i++) {//Build a list of clients
+		char *tmpMsg = NULL;
+		if (!g_entities[i].inuse)
+			continue;
+		cl = &level.clients[i];
+		if (cl->pers.netname[0] && !Q_stricmp(clanPass, cl->sess.clanpass)) { // && cl->pers.userName[0] ?
+			char strNum[12] = {0};
+			char strName[MAX_NETNAME] = {0};
+
+			Q_strncpyz(strNum, va("^5%2i^3:", i), sizeof(strNum));
+			//CG_Printf("^5%2d^3: ^7%s\n", i, cl->name); 
+			Q_strncpyz(strName, cl->pers.netname, sizeof(strName));
+			tmpMsg = va("%-2s ^7%s\n", strNum, strName);
+
+			if (strlen(msg) + strlen(tmpMsg) >= sizeof( msg)) {
+				trap->SendServerCommand( ent-g_entities, va("print \"%s\"", msg));
+				msg[0] = '\0';
+			}
+			Q_strcat(msg, sizeof(msg), tmpMsg);
+		}
+	}
+	trap->SendServerCommand(ent-g_entities, va("print \"%s\"", msg));
+}
+//[JAPRO - Serverside - All - Clanwhois Function - End]
+
+
+
 //[JAPRO - Serverside - All - Saber change Function - Start]
 void Cmd_Saber_f(gentity_t *ent)
 {
@@ -4356,7 +4478,11 @@ void Cmd_Aminfo_f(gentity_t *ent)
 	trap->SendServerCommand(ent-g_entities, va("print \"%s\n\"", buf));
 	
 	Q_strncpyz(buf, "   ^3Chat commands: ", sizeof(buf));
+	Q_strcat(buf, sizeof(buf), "clanPass ");
+	Q_strcat(buf, sizeof(buf), "clanWhoIs ");
+	Q_strcat(buf, sizeof(buf), "clanSay ");
 	Q_strcat(buf, sizeof(buf), "amSay ");
+	Q_strcat(buf, sizeof(buf), "say_team_mod");
 	trap->SendServerCommand(ent-g_entities, va("print \"%s\n\"", buf));
 
 	Q_strncpyz(buf, "   ^3Game commands: ", sizeof(buf));
@@ -4500,24 +4626,6 @@ void Cmd_Showmotd_f(gentity_t *ent)
 	
 }
 
-static void Cmd_Amsay_f( gentity_t *ent ) {
-	char *p = NULL;
-
-	if ( trap->Argc () < 2 )
-		return;
-
-	p = ConcatArgs( 1 );
-
-	//Raz: BOF
-	if ( strlen( p ) > MAX_SAY_TEXT )
-	{
-		p[MAX_SAY_TEXT-1] = '\0';
-		G_SecurityLogPrintf( "Cmd_Say_f from %d (%s) has been truncated: %s\n", ent->s.number, ent->client->pers.netname, p );
-	}
-
-	G_Say( ent, NULL, SAY_ADMIN, p );
-}
-
 /*
 =================
 ClientCommand
@@ -4552,6 +4660,9 @@ command_t commands[] = {
 	{ "amtele",				Cmd_Amtele_f,				CMD_NOINTERMISSION },
 	{ "amtelemark", 		Cmd_Amtelemark_f, 			CMD_NOINTERMISSION },	
 	{ "callvote",			Cmd_CallVote_f,				CMD_NOINTERMISSION },
+	{ "clanpass",			Cmd_Clanpass_f,				CMD_NOINTERMISSION },
+	{ "clansay",			Cmd_Clansay_f,				0 },
+	{ "clanwhois", 			Cmd_Clanwhois_f, 			0 },	
 	{ "debugBMove_Back",	Cmd_BotMoveBack_f,			CMD_CHEAT|CMD_ALIVE },
 	{ "debugBMove_Forward",	Cmd_BotMoveForward_f,		CMD_CHEAT|CMD_ALIVE },
 	{ "debugBMove_Left",	Cmd_BotMoveLeft_f,			CMD_CHEAT|CMD_ALIVE },
@@ -4577,6 +4688,7 @@ command_t commands[] = {
 	{ "saber", 				Cmd_Saber_f, 				CMD_NOINTERMISSION },	
 	{ "say",				Cmd_Say_f,					0 },
 	{ "say_team",			Cmd_SayTeam_f,				0 },
+	{ "say_team_mod", 		Cmd_SayTeamMod_f, 			0 },	
 	{ "score",				Cmd_Score_f,				0 },
 	{ "setviewpos",			Cmd_SetViewpos_f,			CMD_CHEAT|CMD_NOINTERMISSION },
 	{ "serverconfig", 		Cmd_ServerConfig_f, 		0 },
