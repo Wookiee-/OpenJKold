@@ -36,6 +36,11 @@ along with this program; if not, see <http://www.gnu.org/licenses/>.
 
 #define	MAX_ENT_CLUSTERS	16
 
+typedef enum {
+	SVFIX_PLAYERGHOSTING
+
+} svfix_t;
+
 typedef struct svEntity_s {
 	struct worldSector_s *worldSector;
 	struct svEntity_s *nextEntityInWorldSector;
@@ -88,6 +93,7 @@ typedef struct server_s {
 
 	time_t			realMapTimeStarted;	// time the current map was started
 	qboolean		demosPruned; // whether or not existing demos were cleaned up already
+	int				fixes;
 } server_t;
 
 typedef struct clientSnapshot_s {
@@ -273,6 +279,7 @@ extern	cvar_t	*sv_autoDemoBots;
 extern	cvar_t	*sv_autoDemoMaxMaps;
 extern	cvar_t	*sv_legacyFixes;
 extern	cvar_t	*sv_banFile;
+extern	cvar_t	*sv_fixplayerghosting;
 
 extern	serverBan_t serverBans[SERVER_MAXBANS];
 extern	int serverBansCount;

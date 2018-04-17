@@ -999,7 +999,7 @@ void SV_Init (void) {
 	sv_lanForceRate = Cvar_Get ("sv_lanForceRate", "1", CVAR_ARCHIVE_ND );
 
 	sv_filterCommands = Cvar_Get( "sv_filterCommands", "1", CVAR_ARCHIVE );
-
+	sv_fixplayerghosting = Cvar_Get("sv_fixplayerghosting", "1", CVAR_ARCHIVE);
 //	sv_debugserver = Cvar_Get ("sv_debugserver", "0", 0);
 
 	sv_autoDemo = Cvar_Get( "sv_autoDemo", "0", CVAR_ARCHIVE_ND | CVAR_SERVERINFO, "Automatically take server-side demos" );
