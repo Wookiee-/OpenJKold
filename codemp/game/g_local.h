@@ -600,7 +600,9 @@ typedef struct clientSession_s {
 	char		IP[NET_ADDRSTRMAXLEN];
 	qboolean	juniorAdmin;
 	qboolean 	fullAdmin;
-	qboolean 	sawMOTD; // japro has the client been shown the MOTD?	
+	qboolean 	sawMOTD; // japro has the client been shown the MOTD?
+	char		clanpass[32];//Japro - Serverside Clanpass	
+	int			sayteammod;		//0 = normal, 1 = clan, 2 = admin
 	
 } clientSession_t;
 

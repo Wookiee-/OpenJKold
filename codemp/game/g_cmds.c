@@ -1724,10 +1724,14 @@ static void G_SayTo( gentity_t *ent, gentity_t *other, int mode, int color, cons
 	if ( other->client->pers.connected != CON_CONNECTED ) {
 		return;
 	}
-	if ( mode == SAY_TEAM  && !OnSameTeam(ent, other) ) {
+	if ( mode == SAY_TEAM && ((level.gametype >= GT_TEAM && !OnSameTeam(ent, other)) || (level.gametype < GT_TEAM && (ent->client->sess.sessionTeam != other->client->sess.sessionTeam)))) {
 		return;
 	}
-	/*
+
+	if (mode == SAY_CLAN && ((Q_stricmp(ent->client->sess.clanpass, other->client->sess.clanpass) || ent->client->sess.clanpass[0] == 0 || other->client->sess.clanpass[0] == 0)))//Idk
+		return;//Ignore it
+	if (mode == SAY_ADMIN && !(other->client->sess.fullAdmin || other->client->sess.juniorAdmin) && ent != other)
+		return;
 	// no chatting to players in tournaments
 	if ( (level.gametype == GT_DUEL || level.gametype == GT_POWERDUEL)
 		&& other->client->sess.sessionTeam == TEAM_FREE
@@ -1735,7 +1739,7 @@ static void G_SayTo( gentity_t *ent, gentity_t *other, int mode, int color, cons
 		//Hmm, maybe some option to do so if allowed?  Or at least in developer mode...
 		return;
 	}
-	*/
+	
 	//They've requested I take this out.
 
 	if (level.gametype == GT_SIEGE &&
@@ -1770,9 +1774,16 @@ void G_Say( gentity_t *ent, gentity_t *target, int mode, const char *chatText ) 
 	char		location[64];
 	char		*locMsg = NULL;
 
-	if ( level.gametype < GT_TEAM && mode == SAY_TEAM ) {
+/*	if ( level.gametype < GT_TEAM && mode == SAY_TEAM ) {
 		mode = SAY_ALL;
 	}
+*/	
+	if (mode == SAY_TEAM) {
+		if (ent->client->sess.sayteammod == 1)//clanpass
+			mode = SAY_CLAN;
+		else if (ent->client->sess.sayteammod == 2)//clanpass
+			mode = SAY_ADMIN;
+}	
 
 	Q_strncpyz( text, chatText, sizeof(text) );
 
@@ -1814,6 +1825,36 @@ void G_Say( gentity_t *ent, gentity_t *target, int mode, const char *chatText ) 
 		}
 		color = COLOR_MAGENTA;
 		break;
+	case SAY_CLAN:
+		//G_LogPrintf( "sayclan: %s: %s\n", ent->client->pers.netname, chatText );
+		if (Team_GetLocationMsg(ent, location, sizeof(location)))
+		{
+			Com_sprintf (name, sizeof(name), EC"^1<Clan>^7(%s%c%c"EC")"EC": ", 
+				ent->client->pers.netname, Q_COLOR_ESCAPE, COLOR_WHITE );
+			locMsg = location;
+		}
+		else
+		{
+			Com_sprintf (name, sizeof(name), EC"^1<Clan>^7(%s%c%c"EC")"EC": ", 
+				ent->client->pers.netname, Q_COLOR_ESCAPE, COLOR_WHITE );
+		}
+		color = COLOR_RED;
+		break;		
+	case SAY_ADMIN:
+		//G_LogPrintf( "sayadmin: %s: %s\n", ent->client->pers.netname, chatText );
+		if (Team_GetLocationMsg(ent, location, sizeof(location)))
+		{
+			Com_sprintf (name, sizeof(name), EC"^3<Admin>^7(%s%c%c"EC")"EC": ", 
+				ent->client->pers.netname, Q_COLOR_ESCAPE, COLOR_WHITE );
+			locMsg = location;
+		}
+		else
+		{
+			Com_sprintf (name, sizeof(name), EC"^3<Admin>^7(%s%c%c"EC")"EC": ", 
+				ent->client->pers.netname, Q_COLOR_ESCAPE, COLOR_WHITE );
+		}
+		color = COLOR_YELLOW;
+		break;		
 	}
 
 	if ( target ) {
@@ -4313,6 +4354,10 @@ void Cmd_Aminfo_f(gentity_t *ent)
 	Q_strncpyz(buf, va("^5 Hi there, %s^5. This server is using OpenJK.\n", ent->client->pers.netname), sizeof(buf));
 	Q_strcat(buf, sizeof(buf), "   ^3To display server settings, type ^7serverConfig" );
 	trap->SendServerCommand(ent-g_entities, va("print \"%s\n\"", buf));
+	
+	Q_strncpyz(buf, "   ^3Chat commands: ", sizeof(buf));
+	Q_strcat(buf, sizeof(buf), "amSay ");
+	trap->SendServerCommand(ent-g_entities, va("print \"%s\n\"", buf));
 
 	Q_strncpyz(buf, "   ^3Game commands: ", sizeof(buf));
 		Q_strcat(buf, sizeof(buf), "amMOTD ");
@@ -4455,6 +4500,24 @@ void Cmd_Showmotd_f(gentity_t *ent)
 	
 }
 
+static void Cmd_Amsay_f( gentity_t *ent ) {
+	char *p = NULL;
+
+	if ( trap->Argc () < 2 )
+		return;
+
+	p = ConcatArgs( 1 );
+
+	//Raz: BOF
+	if ( strlen( p ) > MAX_SAY_TEXT )
+	{
+		p[MAX_SAY_TEXT-1] = '\0';
+		G_SecurityLogPrintf( "Cmd_Say_f from %d (%s) has been truncated: %s\n", ent->s.number, ent->client->pers.netname, p );
+	}
+
+	G_Say( ent, NULL, SAY_ADMIN, p );
+}
+
 /*
 =================
 ClientCommand
@@ -4484,6 +4547,7 @@ command_t commands[] = {
 	{ "amlockteam", 		Cmd_Amlockteam_f, 			CMD_NOINTERMISSION },	
 	{ "amlogout", 			Cmd_Amlogout_f, 			0 },
 	{ "ammap", 				Cmd_Ammap_f, 				CMD_NOINTERMISSION },
+	{ "amsay", 				Cmd_Amsay_f, 				0 },	
 	{ "amstatus",			Cmd_Amstatus_f,				0 },
 	{ "amtele",				Cmd_Amtele_f,				CMD_NOINTERMISSION },
 	{ "amtelemark", 		Cmd_Amtelemark_f, 			CMD_NOINTERMISSION },	
