@@ -4293,6 +4293,99 @@ void Cmd_Amtelemark_f(gentity_t *ent)
 }
 //[JAPRO - Serverside - All - Amtelemark Function - End]
 
+//[JAPRO - Serverside - All - Aminfo Function - Start]
+/*
+=================
+Cmd_Aminfo_f
+=================
+*/
+void Cmd_Aminfo_f(gentity_t *ent)
+{
+	char buf[MAX_STRING_CHARS-64] = {0};
+
+	if (!ent || !ent->client)
+		return;
+
+	Q_strncpyz(buf, va("^5 Hi there, %s^5. This server is using OpenJK.\n", ent->client->pers.netname), sizeof(buf));
+	Q_strcat(buf, sizeof(buf), "   ^3To display server settings, type ^7serverConfig" );
+	trap->SendServerCommand(ent-g_entities, va("print \"%s\n\"", buf));
+
+	Q_strncpyz(buf, "   ^3Game commands: ", sizeof(buf));
+	if (g_allowSaberSwitch.integer) 
+		Q_strcat(buf, sizeof(buf), "saber ");
+	trap->SendServerCommand(ent-g_entities, va("print \"%s\n\"", buf));
+
+
+	Q_strncpyz(buf, "   ^3Admin commands: ", sizeof(buf));
+	if (!(ent->client->sess.fullAdmin) && !(ent->client->sess.juniorAdmin))
+		Q_strcat(buf, sizeof(buf), "you are not an administrator on this server.\n");
+	else {
+		if ((ent->client->sess.fullAdmin) && (g_fullAdminLevel.integer & (1 << A_ADMINTELE))) 
+			Q_strcat(buf, sizeof(buf), "amTele "); 
+		else if ((ent->client->sess.juniorAdmin) && (g_juniorAdminLevel.integer & (1 << A_ADMINTELE))) 
+			Q_strcat(buf, sizeof(buf), "amTele "); 
+		if ((ent->client->sess.fullAdmin) && (g_fullAdminLevel.integer & (1 << A_TELEMARK))) 
+			Q_strcat(buf, sizeof(buf), "amTeleMark "); 
+		else if ((ent->client->sess.juniorAdmin) && (g_juniorAdminLevel.integer & (1 << A_TELEMARK))) 
+			Q_strcat(buf, sizeof(buf), "amTeleMark ");   
+		if ((ent->client->sess.fullAdmin) && (g_fullAdminLevel.integer & (1 << A_NPC))) 
+			Q_strcat(buf, sizeof(buf), "NPC "); 
+		else if ((ent->client->sess.juniorAdmin) && (g_juniorAdminLevel.integer & (1 << A_NPC))) 
+			Q_strcat(buf, sizeof(buf), "NPC "); 
+		if ((ent->client->sess.fullAdmin) && (g_fullAdminLevel.integer & (1 << A_CHANGEMAP))) 
+			Q_strcat(buf, sizeof(buf), "amMap "); 
+		else if ((ent->client->sess.juniorAdmin) && (g_juniorAdminLevel.integer & (1 << A_CHANGEMAP))) 
+			Q_strcat(buf, sizeof(buf), "amMap "); 
+		if ((ent->client->sess.fullAdmin) && (g_fullAdminLevel.integer & (1 << A_FORCETEAM))) 
+			Q_strcat(buf, sizeof(buf), "amForceTeam "); 
+		else if ((ent->client->sess.juniorAdmin) && (g_juniorAdminLevel.integer & (1 << A_FORCETEAM))) 
+			Q_strcat(buf, sizeof(buf), "amForceTeam "); 
+		if ((ent->client->sess.fullAdmin) && (g_fullAdminLevel.integer & (1 << A_LOCKTEAM))) 
+			Q_strcat(buf, sizeof(buf), "amLockTeam "); 
+		else if ((ent->client->sess.juniorAdmin) && (g_juniorAdminLevel.integer & (1 << A_LOCKTEAM))) 
+			Q_strcat(buf, sizeof(buf), "amLockTeam "); 
+			Q_strcat(buf, sizeof(buf), "amVstr "); 
+		//if ((ent->client->sess.fullAdmin) && (g_fullAdminLevel.integer & (1 << A_STATUS))) 
+			//Q_strcat(buf, sizeof(buf), "amStatus "); 
+		//else if ((ent->client->sess.juniorAdmin) && (g_juniorAdminLevel.integer & (1 << A_STATUS))) 
+			//Q_strcat(buf, sizeof(buf), "amStatus "); 
+		trap->SendServerCommand(ent-g_entities, va("print \"%s\n\"", buf));
+		buf[0] = '\0';
+	}
+	
+
+}
+//[JAPRO - Serverside - All - Aminfo Function - End]
+
+//[JAPRO - Serverside - All - Serverconfig - Start]
+void Cmd_ServerConfig_f(gentity_t *ent) //loda fixme fix indenting on this, make standardized
+{
+	char buf[MAX_STRING_CHARS-64] = {0};
+
+	//Global, important changes
+	Q_strncpyz(buf, " ^3Global Changes:\n", sizeof(buf));
+	Q_strcat(buf, sizeof(buf), va("   ^5Server tickrate^3: ^2%i\n", sv_fps.integer));
+	Q_strcat(buf, sizeof(buf), va("   ^5Force regen time^3: ^2%i\n", g_forceRegenTime.integer - (1000/20))); //slightly off.. even ojk fps30/regen50 is 
+	trap->SendServerCommand(ent-g_entities, va("print \"%s\"", buf));
+
+
+	//Saber changes
+	Q_strncpyz(buf, " ^3Saber Changes:\n", sizeof(buf));
+	Q_strcat(buf, sizeof(buf), va("   ^5Saber style damage^3: ^2%s\n", (d_saberSPStyleDamage.integer) ? "SP" : "MP"));
+	if (g_duelStartArmor.integer)
+		Q_strcat(buf, sizeof(buf), va("   ^5Duelers start with ^2%i ^5armor\n", g_duelStartArmor.integer));
+	if (g_duelStartHealth.integer)
+		Q_strcat(buf, sizeof(buf), va("   ^5Duelers start with ^2%i ^5health\n", g_duelStartHealth.integer));
+	if (g_allowSaberSwitch.integer)
+		Q_strcat(buf, sizeof(buf), "   ^5Allow saber switch\n");
+	trap->SendServerCommand(ent-g_entities, va("print \"%s\"", buf));
+	
+	buf[0] = '\0';
+}
+
+//[JAPRO - Serverside - All - Serverconfig - End]
+
+
 /*
 =================
 ClientCommand
@@ -4318,6 +4411,7 @@ command_t commands[] = {
 	{ "callteamvote",		Cmd_CallTeamVote_f,			CMD_NOINTERMISSION },
 	{ "amlogin",			Cmd_Amlogin_f,				0 },
 	{ "amforceteam", 		Cmd_Amforceteam_f, 			CMD_NOINTERMISSION },
+	{ "aminfo", 			Cmd_Aminfo_f, 				0 },	
 	{ "amlockteam", 		Cmd_Amlockteam_f, 			CMD_NOINTERMISSION },	
 	{ "amlogout", 			Cmd_Amlogout_f, 			0 },
 	{ "ammap", 				Cmd_Ammap_f, 				CMD_NOINTERMISSION },	
@@ -4351,6 +4445,7 @@ command_t commands[] = {
 	{ "say_team",			Cmd_SayTeam_f,				0 },
 	{ "score",				Cmd_Score_f,				0 },
 	{ "setviewpos",			Cmd_SetViewpos_f,			CMD_CHEAT|CMD_NOINTERMISSION },
+	{ "serverconfig", 		Cmd_ServerConfig_f, 		0 },	
 	{ "siegeclass",			Cmd_SiegeClass_f,			CMD_NOINTERMISSION },
 	{ "team",				Cmd_Team_f,					CMD_NOINTERMISSION },
 //	{ "teamtask",			Cmd_TeamTask_f,				CMD_NOINTERMISSION },
