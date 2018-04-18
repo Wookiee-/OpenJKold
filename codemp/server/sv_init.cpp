@@ -220,7 +220,7 @@ void SV_CreateBaseline( void ) {
 	sharedEntity_t *svent;
 	int				entnum;
 
-	for ( entnum = 1; entnum < sv.num_entities ; entnum++ ) {
+	for ( entnum = 0; entnum < sv.num_entities ; entnum++ ) {
 		svent = SV_GentityNum(entnum);
 		if (!svent->r.linked) {
 			continue;
@@ -952,6 +952,9 @@ void SV_Init (void) {
 	sv_hostname = Cvar_Get ("sv_hostname", "*Jedi*", CVAR_SERVERINFO | CVAR_ARCHIVE, "The name of the server that is displayed in the serverlist" );
 	sv_maxclients = Cvar_Get ("sv_maxclients", "8", CVAR_SERVERINFO | CVAR_LATCH, "Max. connected clients" );
 
+	Cvar_Get("sv_enableDuelCull", "1", 0);
+	Cvar_Get("sv_debugCMCull", "0", 0);
+	Cvar_Get("sv_debugSnapshotCull", "0", 0);	
 
 	//cvar_t	*sv_ratePolicy;		// 1-2
 	//cvar_t	*sv_clientRate;

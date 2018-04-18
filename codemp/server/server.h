@@ -196,6 +196,20 @@ typedef struct client_s {
 	qboolean		csUpdated[MAX_CONFIGSTRINGS];
 
 	demoInfo_t		demo;
+	bool				nonsolid;
+	bool				noduelInProgress;
+	bool				noduelevent;
+	bool				drawduelers;
+	bool				drawothers;
+
+	void defaults() {
+		nonsolid = true;
+		noduelInProgress = true;
+		noduelevent = false;
+		drawduelers = true;
+		drawothers = false;
+	}	
+	
 } client_t;
 
 //=============================================================================
@@ -413,6 +427,8 @@ void Bot_FreeMemoryGame(void *ptr);
 
 int BotImport_DebugPolygonCreate(int color, int numPoints, vec3_t *points);
 void BotImport_DebugPolygonDelete(int id);
+
+bool DuelCull(sharedEntity_t *a, sharedEntity_t *b);
 
 //============================================================
 //
