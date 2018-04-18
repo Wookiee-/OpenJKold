@@ -30,6 +30,6 @@ This is a lite version of jaPRO with limited commands which aims to have no admi
 
 * Amlogin, Amlogout, Amtele, Amtelemark, Ammap, Npc, Amforceteam, Amlockteam, Aminfo, Amsay, AmStatus
 
-##
+## Downloads
 
-* server.cfg link coming soon
+* https://www.dropbox.com/sh/yc4lm58ft8kqsyl/AAA3LMsYFAL9NSdnFmiSQY1Oa?
