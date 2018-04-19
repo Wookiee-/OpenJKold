@@ -425,7 +425,7 @@ static void SV_AddEntitiesVisibleFromPoint( vec3_t origin, clientSnapshot_t *fra
 			}
 		}
 		
-		bool culled = DuelCull(ent, SV_GentityNum(frame->ps.clientNum));
+		bool culled = DuelCull(SV_GentityNum(frame->ps.clientNum), ent);
 		if ((frame->ps.duelInProgress == qfalse && !client->drawduelers && culled)
 		    || (frame->ps.duelInProgress == qtrue && !client->drawothers && culled)) {
 			if (Cvar_VariableIntegerValue("sv_debugSnapshotCull")) {
