@@ -36,5 +36,5 @@ Below are some links to files with the latest releases
 
 * Folder - https://www.dropbox.com/sh/yc4lm58ft8kqsyl/AAA3LMsYFAL9NSdnFmiSQY1Oa
 * Jampgamei386 - https://www.dropbox.com/s/ep5in5u7j4ubsw1/jampgamei386.so
-* Openjkded.i386 - https://www.dropbox.com/s/igvf87tmmg7jy2h/openjkded.i386
+* Openjkded.i386 - https://www.dropbox.com/s/igvf87tmmg7jy2h/openjkded.i386 (Custom with hidden duelshell/interference/other players while dueling) 
 * Server.cfg - https://www.dropbox.com/s/81wjqvtim142kxm/server.cfg
