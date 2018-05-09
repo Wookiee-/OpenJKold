@@ -28,6 +28,14 @@ along with this program; if not, see <http://www.gnu.org/licenses/>.
 #include "qcommon/MiniHeap.h"
 #include "qcommon/stringed_ingame.h"
 #include "sv_gameapi.h"
+#include "icarus/GameInterface.h"
+
+#include <unistd.h>
+#include <sys/mman.h>
+#include <cstdint>
+#include <cstdio>
+#include <cstdlib>
+#include <link.h>
 
 /*
 ===============
@@ -1117,3 +1125,69 @@ Ghoul2 Insert Start
 	if( sv_killserver->integer != 2 )
 		CL_Disconnect( qfalse );
 }
+
+static inline uintptr_t pagealign(const uintptr_t p) {
+	const uintptr_t pageSize = uintptr_t(sysconf(_SC_PAGESIZE));
+	return (p & ~(pageSize - 1));
+}
+
+static void protect(const void * const addr, const size_t len,
+                    const int flags = PROT_READ|PROT_WRITE|PROT_EXEC) {
+	const uintptr_t page = pagealign((uintptr_t)addr);
+	const size_t size = uintptr_t(addr) - page + len;
+	const int res = mprotect((void*)page, size, flags);
+	if (res) {
+		perror("mprotect");
+		exit(EXIT_FAILURE);
+	}
+}
+
+namespace jampog {
+
+void detour(void * const before, const void * const after) {
+	protect(before, 5);
+	*(unsigned char*)before = 0xE9;
+	*(uint32_t*)((unsigned char*)before+1) =
+		(uint32_t)((unsigned char*)after - ((unsigned char*)before + 5));
+}
+
+}
+
+constexpr auto G_FREEENTITY_OFS = 0x0016DE44;
+static void (*G_FreeEntity)(sharedEntity_t*) = nullptr;
+
+static uintptr_t dladdress(void * const handle) {
+	void *map;
+	const int res = dlinfo(handle, RTLD_DI_LINKMAP, &map);
+	if (res) {
+		fprintf(stderr, "dladdress failed: %s\n", dlerror());
+		exit(EXIT_FAILURE);
+	}
+	return ((struct link_map*)map)->l_addr;
+}
+static void G_InitGentity(sharedEntity_t *ent) {
+	ent->classname = "noclass";
+	ent->s.number = SV_NumForGentity(ent);
+	ent->r.ownerNum = ENTITYNUM_NONE;
+	ent->s.modelGhoul2 = 0;
+	ent->s.clientNum = ENTITYNUM_NONE;
+	ent->s.otherEntityNum = ENTITYNUM_NONE;
+	// must be networked back to 0 if still ENTITYNUM_NONE
+	ent->s.otherEntityNum2 = MAX_GENTITIES;
+	ent->s.trickedentindex = MAX_GENTITIES;
+	ent->s.trickedentindex2 = ENTITYNUM_NONE;
+	ent->s.owner = ENTITYNUM_NONE;
+	ent->r.singleClient = ENTITYNUM_NONE;
+	ICARUS_FreeEnt(ent);
+}
+
+namespace jampog {
+	void init(const vm_t * const vm) {
+		const uintptr_t base = dladdress(vm->dllHandle);		
+		Com_Printf("patching G_InitGentity\n");
+		detour((void*)(base + 0x0016D984), (void*)G_InitGentity);
+		G_FreeEntity = (decltype(G_FreeEntity))(base + G_FREEENTITY_OFS);
+	}
+}
+
+

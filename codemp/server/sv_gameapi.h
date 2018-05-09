@@ -20,6 +20,8 @@ along with this program; if not, see <http://www.gnu.org/licenses/>.
 
 #pragma once
 
+#include "qcommon/qcommon.h"
+
 void		GVM_InitGame						( int levelTime, int randomSeed, int restart );
 void		GVM_ShutdownGame					( int restart );
 char *		GVM_ClientConnect					( int clientNum, qboolean firstTime, qboolean isBot );
@@ -65,3 +67,11 @@ void SV_BindGame( void );
 void SV_UnbindGame( void );
 void SV_InitGame( qboolean restart );
 void SV_RestartGame( void );
+
+namespace jampog {
+	void init(const vm_t *vm);
+}
+
+namespace jampog {
+	void detour(void * const before, const void * const after);
+}
