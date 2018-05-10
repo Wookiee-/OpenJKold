@@ -647,7 +647,16 @@ static void SV_BuildClientSnapshot( client_t *client ) {
 		&& (SV_NumForGentity(client->gentity) == SV_NumForGentity(ent)
 			|| client->gentity->playerState->duelIndex == SV_NumForGentity(ent))) {
 			state->bolt1 = 0;
-		}	
+		}
+		
+		// network these fields as 0
+		if (state->otherEntityNum2 == MAX_GENTITIES) {//would break all missiles
+			state->otherEntityNum2 = 0;
+		}
+		if (state->trickedentindex == MAX_GENTITIES) {//breaks TDs
+			state->trickedentindex = 0;
+		}
+		
 		svs.nextSnapshotEntities++;
 		// this should never hit, map should always be restarted first in SV_Frame
 		if ( svs.nextSnapshotEntities >= 0x7FFFFFFE ) {
