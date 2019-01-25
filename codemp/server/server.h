@@ -36,11 +36,6 @@ along with this program; if not, see <http://www.gnu.org/licenses/>.
 
 #define	MAX_ENT_CLUSTERS	16
 
-typedef enum {
-	SVFIX_PLAYERGHOSTING
-
-} svfix_t;
-
 typedef struct svEntity_s {
 	struct worldSector_s *worldSector;
 	struct svEntity_s *nextEntityInWorldSector;
@@ -93,7 +88,6 @@ typedef struct server_s {
 
 	time_t			realMapTimeStarted;	// time the current map was started
 	qboolean		demosPruned; // whether or not existing demos were cleaned up already
-	int				fixes;
 } server_t;
 
 typedef struct clientSnapshot_s {
@@ -196,20 +190,6 @@ typedef struct client_s {
 	qboolean		csUpdated[MAX_CONFIGSTRINGS];
 
 	demoInfo_t		demo;
-	bool				nonsolid;
-	bool				noduelInProgress;
-	bool				noduelevent;
-	bool				drawduelers;
-	bool				drawothers;
-
-	void defaults() {
-		nonsolid = true;
-		noduelInProgress = true;
-		noduelevent = false;
-		drawduelers = true;
-		drawothers = false;
-	}	
-	
 } client_t;
 
 //=============================================================================
@@ -293,7 +273,6 @@ extern	cvar_t	*sv_autoDemoBots;
 extern	cvar_t	*sv_autoDemoMaxMaps;
 extern	cvar_t	*sv_legacyFixes;
 extern	cvar_t	*sv_banFile;
-extern	cvar_t	*sv_fixplayerghosting;
 
 extern	serverBan_t serverBans[SERVER_MAXBANS];
 extern	int serverBansCount;
@@ -428,8 +407,6 @@ void Bot_FreeMemoryGame(void *ptr);
 int BotImport_DebugPolygonCreate(int color, int numPoints, vec3_t *points);
 void BotImport_DebugPolygonDelete(int id);
 
-bool DuelCull(sharedEntity_t *a, sharedEntity_t *b);
-
 //============================================================
 //
 // high level object sorting to reduce interaction tests
@@ -490,3 +467,4 @@ void SV_ClipToEntity( trace_t *trace, const vec3_t start, const vec3_t mins, con
 void SV_Netchan_Transmit( client_t *client, msg_t *msg);	//int length, const byte *data );
 void SV_Netchan_TransmitNextFragment( netchan_t *chan );
 qboolean SV_Netchan_Process( client_t *client, msg_t *msg );
+

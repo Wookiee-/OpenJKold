@@ -63,11 +63,8 @@ svEntity_t	*SV_SvEntityForGentity( sharedEntity_t *gEnt ) {
 	if ( !gEnt || gEnt->s.number < 0 || gEnt->s.number >= MAX_GENTITIES ) {
 		Com_Error( ERR_DROP, "SV_SvEntityForGentity: bad gEnt" );
 	}
-	if ( sv_fixplayerghosting->integer && !(sv.fixes & SVFIX_PLAYERGHOSTING) ) {
-		return &sv.svEntities[ SV_NumForGentity( gEnt ) ];
-	} else {
-		return &sv.svEntities[ gEnt->s.number ];
-	}
+	return &sv.svEntities[ SV_NumForGentity( gEnt ) ];
+//	return &sv.svEntities[ gEnt->s.number ]; Old value
 }
 
 sharedEntity_t *SV_GEntityForSvEntity( svEntity_t *svEnt ) {
