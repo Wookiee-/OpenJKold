@@ -1,8 +1,8 @@
-# OpenJK Clan Edition (Linux Server Side)
+# jaPRO Lite Edition (Linux Server Side)
 
-## Direction of OpenJK Clan Edition
+## Direction of jaPRO Lite
 
-This is based from jaPRO/JA++ with limited commands with a basic admin system so players can tele to players.
+This is based from jaPRO soon to have some additions from JA++ and client support from JA+/JA++/Japro.
 
 ## Features 
 
@@ -14,6 +14,7 @@ This is based from jaPRO/JA++ with limited commands with a basic admin system so
 * Duel Distance Limit on/off 
 * FullAdmin and JuniorAdmin levels
 * Clan chat support for scrims 
+* JKA/JO Saber Ghoul2Collision can be toggled on/off
 * Clean compile
 
 ## Game Commands
@@ -30,4 +31,13 @@ This is based from jaPRO/JA++ with limited commands with a basic admin system so
 
 * Amlogin, Amlogout, Amtele, Amtelemark, Ammap, Npc, Amforceteam, Amlockteam, Aminfo, Amsay, AmStatus
 
+## To be added
 
+* Emotes
+* Flipkick
+* Grapple Hook
+* God Mode
+* More admin commands
+* Another admin level
+* JK2 moves and roll.
+* And many more
