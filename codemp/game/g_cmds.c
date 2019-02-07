@@ -1730,7 +1730,7 @@ static void G_SayTo( gentity_t *ent, gentity_t *other, int mode, int color, cons
 
 	if (mode == SAY_CLAN && ((Q_stricmp(ent->client->sess.clanpass, other->client->sess.clanpass) || ent->client->sess.clanpass[0] == 0 || other->client->sess.clanpass[0] == 0)))//Idk
 		return;//Ignore it
-	if (mode == SAY_ADMIN && !(other->client->sess.fullAdmin || other->client->sess.juniorAdmin) && ent != other)
+	if (mode == SAY_ADMIN && !(other->client->sess.fullCouncil || other->client->sess.fullKnight || other->client->sess.fullInstructor) && ent != other)
 		return;
 	// no chatting to players in tournaments
 	if ( (level.gametype == GT_DUEL || level.gametype == GT_POWERDUEL)
@@ -3809,14 +3809,20 @@ static qboolean CheckAdminCmd(gentity_t *ent, int command, char *commandString) 
 	if (!ent || !ent->client)
 		return qfalse;
 
-	if (ent->client && ent->client->sess.fullAdmin) {//Logged in as full admin
-		if (!(g_fullAdminLevel.integer & (1 << command))) {
+	if (ent->client && ent->client->sess.fullCouncil) {//Logged in as full council admin
+		if (!(g_councilAdminLevel.integer & (1 << command))) {
 			trap->SendServerCommand( ent-g_entities, va("print \"You are not authorized to use this command (%s).\n\"", commandString ));
 			return qfalse;
 		}
 	}
-	else if (ent->client && ent->client->sess.juniorAdmin) {//Logged in as junior admin
-		if (!(g_juniorAdminLevel.integer & (1 << command))) {
+	else if (ent->client && ent->client->sess.fullInstructor) {//Logged in as instructor
+		if (!(g_instructorAdminLevel.integer & (1 << command))) {
+			trap->SendServerCommand( ent-g_entities, va("print \"You are not authorized to use this command (%s).\n\"", commandString));
+			return qfalse;
+		}
+	}		
+	else if (ent->client && ent->client->sess.fullKnight) {//Logged in as knight admin
+		if (!(g_knightAdminLevel.integer & (1 << command))) {
 			trap->SendServerCommand( ent-g_entities, va("print \"You are not authorized to use this command (%s).\n\"", commandString));
 			return qfalse;
 		}
@@ -3925,7 +3931,7 @@ void Cmd_Amlogin_f(gentity_t *ent)
 	}
 	if (trap->Argc() == 2) 
 	{
-		if (ent->client->sess.juniorAdmin || ent->client->sess.fullAdmin)
+		if (ent->client->sess.fullCouncil || ent->client->sess.fullKnight || ent->client->sess.fullInstructor  )
 		{
 			trap->SendServerCommand( ent-g_entities, "print \"You are already logged in. Type in /amLogout to remove admin status.\n\"" ); 
 			return; 
@@ -3935,26 +3941,36 @@ void Cmd_Amlogin_f(gentity_t *ent)
 			trap->SendServerCommand( ent-g_entities, "print \"Usage: amLogin <password>\n\"" ); 
 			return;
 		}
-		if ( !Q_stricmp( pass, g_fullAdminPass.string ) )
+		if ( !Q_stricmp( pass, g_councilAdminPass.string ) )
 		{
-			if ( !Q_stricmp( "", g_fullAdminPass.string ) )//dunno
+			if ( !Q_stricmp( "", g_councilAdminPass.string ) )//dunno
 				return;
-			ent->client->sess.fullAdmin = qtrue;
-			trap->SendServerCommand( ent-g_entities, "print \"^2You are now logged in with full admin privileges.\n\"");
-			if (Q_stricmp(g_fullAdminMsg.string, "" ))
-				trap->SendServerCommand( -1, va("print \"%s ^7%s\n\"", ent->client->pers.netname, g_fullAdminMsg.string ));
+			ent->client->sess.fullCouncil = qtrue;
+			trap->SendServerCommand( ent-g_entities, "print \"^2You are now logged in with council privileges.\n\"");
+			if (Q_stricmp(g_councilAdminMsg.string, "" ))
+				trap->SendServerCommand( -1, va("print \"%s ^7%s\n\"", ent->client->pers.netname, g_councilAdminMsg.string ));
 			return; 
 		}
-		if ( !Q_stricmp( pass, g_juniorAdminPass.string ) )
+			if ( !Q_stricmp( pass, g_instructorAdminPass.string ) )
 		{
-			if ( !Q_stricmp( "", g_juniorAdminPass.string ) )
+			if ( !Q_stricmp( "", g_instructorAdminPass.string ) )
 				return;
-			ent->client->sess.juniorAdmin = qtrue;
-			trap->SendServerCommand( ent-g_entities, "print \"^2You are now logged in with junior admin privileges.\n\"");
-			if (Q_stricmp(g_juniorAdminMsg.string, "" ))
-				trap->SendServerCommand( -1, va("print \"%s ^7%s\n\"", ent->client->pers.netname, g_juniorAdminMsg.string ));
+			ent->client->sess.fullInstructor = qtrue;
+			trap->SendServerCommand( ent-g_entities, "print \"^2You are now logged in with instructor privileges.\n\"");
+			if (Q_stricmp(g_instructorAdminMsg.string, "" ))
+				trap->SendServerCommand( -1, va("print \"%s ^7%s\n\"", ent->client->pers.netname, g_instructorAdminMsg.string ));
 			return; 
-		}
+		}	
+		if ( !Q_stricmp( pass, g_knightAdminPass.string ) )
+		{
+			if ( !Q_stricmp( "", g_knightAdminPass.string ) )
+				return;
+			ent->client->sess.fullKnight = qtrue;
+			trap->SendServerCommand( ent-g_entities, "print \"^2You are now logged in with knight privileges.\n\"");
+			if (Q_stricmp(g_knightAdminMsg.string, "" ))
+				trap->SendServerCommand( -1, va("print \"%s ^7%s\n\"", ent->client->pers.netname, g_knightAdminMsg.string ));
+			return; 
+		}		
 		else 
 		{
 			trap->SendServerCommand( ent-g_entities, "print \"^3Failed to log in: Incorrect password!\n\"");
@@ -3973,10 +3989,11 @@ void Cmd_Amlogout_f(gentity_t *ent)
 {
 	if (!ent->client)
 		return;
-	if (ent->client->sess.fullAdmin || ent->client->sess.juniorAdmin)
+	if (ent->client->sess.fullCouncil || ent->client->sess.fullKnight || ent->client->sess.fullInstructor)
 	{ 
-		ent->client->sess.fullAdmin = qfalse;
-		ent->client->sess.juniorAdmin = qfalse;
+		ent->client->sess.fullCouncil = qfalse;
+		ent->client->sess.fullInstructor = qfalse;		
+		ent->client->sess.fullKnight = qfalse;		
 		trap->SendServerCommand( ent-g_entities, "print \"You are no longer an admin.\n\"");         
 	}
 }
@@ -4117,7 +4134,7 @@ void Cmd_Amforceteam_f(gentity_t *ent)
 				} 
 
 
-				if ((g_entities[clientid].client && (g_entities[clientid].client->sess.fullAdmin)) || (ent->client->sess.juniorAdmin && g_entities[clientid].client->sess.juniorAdmin))
+				if ((g_entities[clientid].client && (g_entities[clientid].client->sess.fullCouncil)) || (ent->client->sess.fullKnight && g_entities[clientid].client->sess.fullKnight) || (ent->client->sess.fullInstructor && g_entities[clientid].client->sess.fullInstructor))
 				{
 					if (g_entities[clientid].client->ps.clientNum != ent->client->ps.clientNum)
 						return;
@@ -4235,22 +4252,30 @@ void Cmd_Amtele_f(gentity_t *ent)
 	if (!ent->client)
 		return;
 
-	if (ent->client->sess.fullAdmin)//Logged in as full admin
+	if (ent->client->sess.fullCouncil)//Logged in as full admin
 	{
-		if (!(g_fullAdminLevel.integer & (1 << A_ADMINTELE)))
+		if (!(g_councilAdminLevel.integer & (1 << A_ADMINTELE)))
 		{
 				trap->SendServerCommand( ent-g_entities, "print \"You are not authorized to use this command (amTele).\n\"" );
 			return;
 		}
 	}
-	else if (ent->client->sess.juniorAdmin)//Logged in as junior admin
+	else if (ent->client->sess.fullInstructor)//Logged in as junior admin
 	{
-		if (!(g_juniorAdminLevel.integer & (1 << A_ADMINTELE)))
+		if (!(g_instructorAdminLevel.integer & (1 << A_ADMINTELE)))
 		{
 				trap->SendServerCommand( ent-g_entities, "print \"You are not authorized to use this command (amTele).\n\"" );
 			return;
 		}
 	}
+	else if (ent->client->sess.fullKnight)//Logged in as junior admin
+	{
+		if (!(g_knightAdminLevel.integer & (1 << A_ADMINTELE)))
+		{
+				trap->SendServerCommand( ent-g_entities, "print \"You are not authorized to use this command (amTele).\n\"" );
+			return;
+		}
+	}	
 	else  //Not logged in
 	{
 			trap->SendServerCommand( ent-g_entities, "print \"You must be logged in to use this command (amTele).\n\"" );
@@ -4301,7 +4326,7 @@ void Cmd_Amtele_f(gentity_t *ent)
 		if (clientid1 == -1 || clientid1 == -2 || clientid2 == -1 || clientid2 == -2)  
 			return; 
 
-		if ((g_entities[clientid1].client && (g_entities[clientid1].client->sess.fullAdmin)) || (ent->client->sess.juniorAdmin && g_entities[clientid1].client->sess.juniorAdmin))//He has admin
+		if ((g_entities[clientid1].client && (g_entities[clientid1].client->sess.fullCouncil)) || (ent->client->sess.fullKnight && g_entities[clientid1].client->sess.fullKnight) || (ent->client->sess.fullInstructor && g_entities[clientid1].client->sess.fullInstructor))//He has admin
 		{
 			if (g_entities[clientid1].client->ps.clientNum != ent->client->ps.clientNum)//Hes not me
 			{
@@ -4363,7 +4388,7 @@ void Cmd_Amtele_f(gentity_t *ent)
 
 		else//Amtele other player to origin
 		{
-			if ((g_entities[clientid1].client && (g_entities[clientid1].client->sess.fullAdmin)) || (ent->client->sess.juniorAdmin && g_entities[clientid1].client->sess.juniorAdmin))//He has admin
+		if ((g_entities[clientid1].client && (g_entities[clientid1].client->sess.fullCouncil)) || (ent->client->sess.fullKnight && g_entities[clientid1].client->sess.fullKnight) || (ent->client->sess.fullInstructor && g_entities[clientid1].client->sess.fullInstructor))//He has admin
 			{	
 				if (g_entities[clientid1].client->ps.clientNum != ent->client->ps.clientNum)//Hes not me
 				{
@@ -4396,7 +4421,7 @@ void Cmd_Amtele_f(gentity_t *ent)
 		if (clientid1 == -1 || clientid1 == -2)
 			return;
 
-		if ((g_entities[clientid1].client && (g_entities[clientid1].client->sess.fullAdmin)) || (ent->client->sess.juniorAdmin && g_entities[clientid1].client->sess.juniorAdmin))//He has admin
+		if ((g_entities[clientid1].client && (g_entities[clientid1].client->sess.fullCouncil)) || (ent->client->sess.fullKnight && g_entities[clientid1].client->sess.fullKnight) || (ent->client->sess.fullInstructor && g_entities[clientid1].client->sess.fullInstructor))//He has admin
 		{
 			if (g_entities[clientid1].client->ps.clientNum != ent->client->ps.clientNum)//Hes not me
 			{
@@ -4493,36 +4518,50 @@ void Cmd_Aminfo_f(gentity_t *ent)
 
 
 	Q_strncpyz(buf, "   ^3Admin commands: ", sizeof(buf));
-	if (!(ent->client->sess.fullAdmin) && !(ent->client->sess.juniorAdmin))
+	if (!(ent->client->sess.fullCouncil)  && !(ent->client->sess.fullInstructor) && !(ent->client->sess.fullKnight))
 		Q_strcat(buf, sizeof(buf), "you are not an administrator on this server.\n");
 	else {
-		if ((ent->client->sess.fullAdmin) && (g_fullAdminLevel.integer & (1 << A_ADMINTELE))) 
+		if ((ent->client->sess.fullCouncil) && (g_councilAdminLevel.integer & (1 << A_ADMINTELE))) 
 			Q_strcat(buf, sizeof(buf), "amTele "); 
-		else if ((ent->client->sess.juniorAdmin) && (g_juniorAdminLevel.integer & (1 << A_ADMINTELE))) 
+		if ((ent->client->sess.fullKnight) && (g_knightAdminLevel.integer & (1 << A_ADMINTELE))) 
 			Q_strcat(buf, sizeof(buf), "amTele "); 
-		if ((ent->client->sess.fullAdmin) && (g_fullAdminLevel.integer & (1 << A_TELEMARK))) 
+		if ((ent->client->sess.fullInstructor) && (g_instructorAdminLevel.integer & (1 << A_ADMINTELE))) 
+			Q_strcat(buf, sizeof(buf), "amTele "); 		
+		if ((ent->client->sess.fullCouncil) && (g_councilAdminLevel.integer & (1 << A_TELEMARK))) 
 			Q_strcat(buf, sizeof(buf), "amTeleMark "); 
-		else if ((ent->client->sess.juniorAdmin) && (g_juniorAdminLevel.integer & (1 << A_TELEMARK))) 
+		if ((ent->client->sess.fullKnight) && (g_knightAdminLevel.integer & (1 << A_TELEMARK))) 
+			Q_strcat(buf, sizeof(buf), "amTeleMark ");   		
+		if ((ent->client->sess.fullInstructor) && (g_instructorAdminLevel.integer & (1 << A_TELEMARK))) 
 			Q_strcat(buf, sizeof(buf), "amTeleMark ");   
-		if ((ent->client->sess.fullAdmin) && (g_fullAdminLevel.integer & (1 << A_NPC))) 
+		if ((ent->client->sess.fullCouncil) && (g_councilAdminLevel.integer & (1 << A_NPC))) 
 			Q_strcat(buf, sizeof(buf), "NPC "); 
-		else if ((ent->client->sess.juniorAdmin) && (g_juniorAdminLevel.integer & (1 << A_NPC))) 
+		if ((ent->client->sess.fullKnight) && (g_knightAdminLevel.integer & (1 << A_NPC))) 
+			Q_strcat(buf, sizeof(buf), "NPC "); 		
+		if ((ent->client->sess.fullInstructor) && (g_instructorAdminLevel.integer & (1 << A_NPC))) 
 			Q_strcat(buf, sizeof(buf), "NPC "); 
-		if ((ent->client->sess.fullAdmin) && (g_fullAdminLevel.integer & (1 << A_CHANGEMAP))) 
+		if ((ent->client->sess.fullCouncil) && (g_councilAdminLevel.integer & (1 << A_CHANGEMAP))) 
 			Q_strcat(buf, sizeof(buf), "amMap "); 
-		else if ((ent->client->sess.juniorAdmin) && (g_juniorAdminLevel.integer & (1 << A_CHANGEMAP))) 
+		if ((ent->client->sess.fullKnight) && (g_knightAdminLevel.integer & (1 << A_CHANGEMAP))) 
 			Q_strcat(buf, sizeof(buf), "amMap "); 
-		if ((ent->client->sess.fullAdmin) && (g_fullAdminLevel.integer & (1 << A_FORCETEAM))) 
+		if ((ent->client->sess.fullInstructor) && (g_instructorAdminLevel.integer & (1 << A_CHANGEMAP))) 
+			Q_strcat(buf, sizeof(buf), "amMap "); 
+		if ((ent->client->sess.fullCouncil) && (g_councilAdminLevel.integer & (1 << A_FORCETEAM))) 
 			Q_strcat(buf, sizeof(buf), "amForceTeam "); 
-		else if ((ent->client->sess.juniorAdmin) && (g_juniorAdminLevel.integer & (1 << A_FORCETEAM))) 
+		if ((ent->client->sess.fullKnight) && (g_knightAdminLevel.integer & (1 << A_FORCETEAM))) 
 			Q_strcat(buf, sizeof(buf), "amForceTeam "); 
-		if ((ent->client->sess.fullAdmin) && (g_fullAdminLevel.integer & (1 << A_LOCKTEAM))) 
+		if ((ent->client->sess.fullInstructor) && (g_instructorAdminLevel.integer & (1 << A_FORCETEAM))) 
+			Q_strcat(buf, sizeof(buf), "amForceTeam "); 		
+		if ((ent->client->sess.fullCouncil) && (g_councilAdminLevel.integer & (1 << A_LOCKTEAM))) 
 			Q_strcat(buf, sizeof(buf), "amLockTeam "); 
-		else if ((ent->client->sess.juniorAdmin) && (g_juniorAdminLevel.integer & (1 << A_LOCKTEAM))) 
-			Q_strcat(buf, sizeof(buf), "amLockTeam ");  
-		if ((ent->client->sess.fullAdmin) && (g_fullAdminLevel.integer & (1 << A_STATUS))) 
+		if ((ent->client->sess.fullKnight) && (g_knightAdminLevel.integer & (1 << A_LOCKTEAM))) 
+			Q_strcat(buf, sizeof(buf), "amLockTeam "); 
+		if ((ent->client->sess.fullInstructor) && (g_instructorAdminLevel.integer & (1 << A_LOCKTEAM))) 
+			Q_strcat(buf, sizeof(buf), "amLockTeam ");		
+		if ((ent->client->sess.fullCouncil) && (g_councilAdminLevel.integer & (1 << A_STATUS))) 
 			Q_strcat(buf, sizeof(buf), "amStatus "); 
-		else if ((ent->client->sess.juniorAdmin) && (g_juniorAdminLevel.integer & (1 << A_STATUS))) 
+		if ((ent->client->sess.fullKnight) && (g_knightAdminLevel.integer & (1 << A_STATUS))) 
+			Q_strcat(buf, sizeof(buf), "amStatus ");
+		if ((ent->client->sess.fullInstructor) && (g_instructorAdminLevel.integer & (1 << A_STATUS))) 
 			Q_strcat(buf, sizeof(buf), "amStatus "); 
 		trap->SendServerCommand(ent-g_entities, va("print \"%s\n\"", buf));
 		buf[0] = '\0';
@@ -4565,17 +4604,19 @@ static void Cmd_Amstatus_f( gentity_t *ent )
 			p = strchr(strIP, ':');
 			if (p) //loda - fix ip sometimes not printing in amstatus?
 				*p = 0;
-			if (cl->sess.fullAdmin)
-				Q_strncpyz( strAdmin, "^3Full^7", sizeof(strAdmin));
-			else if (cl->sess.juniorAdmin)
-				Q_strncpyz(strAdmin, "^3Junior^7", sizeof(strAdmin));
+			if (cl->sess.fullCouncil)
+				Q_strncpyz( strAdmin, "^3Council^7", sizeof(strAdmin));
+			if (cl->sess.fullKnight)
+				Q_strncpyz(strAdmin, "^5Knight^7", sizeof(strAdmin));
+			if (cl->sess.fullInstructor)
+				Q_strncpyz(strAdmin, "^1Instructor^7", sizeof(strAdmin));			
 			else
 				Q_strncpyz(strAdmin, "^7None^7", sizeof(strAdmin));
 			if (g_entities[i].r.svFlags & SVF_BOT)
 				Q_strncpyz(strPlugin, "^7Bot^7", sizeof(strPlugin));
 			else
 				Q_strncpyz(strPlugin, (cl->pers.isJAPRO) ? "^2Yes^7" : "^1No^7", sizeof(strPlugin));
-				tmpMsg = va( "%-5s%-18s^7%-14s%-16s%s^7\n", strNum, strIP, strPlugin, strAdmin, strName);
+				tmpMsg = va( "%-5s%-18s^7%-14s%-14s%s^7\n", strNum, strIP, strPlugin, strAdmin, strName);
 			if (strlen(msg) + strlen(tmpMsg) >= sizeof( msg)) {
 				trap->SendServerCommand( ent-g_entities, va("print \"%s\"", msg));
 				msg[0] = '\0';

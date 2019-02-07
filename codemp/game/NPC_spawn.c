@@ -4259,24 +4259,31 @@ static qboolean CheckAdminCmd(gentity_t *ent, int command, char *commandString) 
 	if (!ent || !ent->client)
 		return qfalse;
 
-	if (ent->client && ent->client->sess.fullAdmin) {//Logged in as full admin
-		if (!(g_fullAdminLevel.integer & (1 << command))) {
+	if (ent->client && ent->client->sess.fullCouncil) {//Logged in as full council admin
+		if (!(g_councilAdminLevel.integer & (1 << command))) {
 			trap->SendServerCommand( ent-g_entities, va("print \"You are not authorized to use this command (%s).\n\"", commandString ));
 			return qfalse;
 		}
 	}
-	else if (ent->client && ent->client->sess.juniorAdmin) {//Logged in as junior admin
-		if (!(g_juniorAdminLevel.integer & (1 << command))) {
+	else if (ent->client && ent->client->sess.fullKnight) {//Logged in as knight admin
+		if (!(g_knightAdminLevel.integer & (1 << command))) {
 			trap->SendServerCommand( ent-g_entities, va("print \"You are not authorized to use this command (%s).\n\"", commandString));
 			return qfalse;
 		}
 	}
+	else if (ent->client && ent->client->sess.fullInstructor) {//Logged in as instructor
+		if (!(g_instructorAdminLevel.integer & (1 << command))) {
+			trap->SendServerCommand( ent-g_entities, va("print \"You are not authorized to use this command (%s).\n\"", commandString));
+			return qfalse;
+		}
+	}	
 	else {//Not logged in
 		trap->SendServerCommand( ent-g_entities, va("print \"You must be logged in to use this command (%s).\n\"", commandString) );
 		return qfalse;
 	}
 	return qtrue;
 }
+
 
 /*
 Svcmd_NPC_f
