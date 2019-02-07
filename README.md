@@ -12,7 +12,7 @@ This is based from jaPRO soon to have some additions from JA++ and client suppor
 * ConsoleMOTD and CenterMOTD
 * Sliding on players head on/off
 * Duel Distance Limit on/off 
-* FullAdmin and JuniorAdmin levels
+* Council, Knight and Instructor admin level
 * Clan chat support for scrims 
 * JKA/JO Saber Ghoul2Collision can be toggled on/off
 * Clean compile
@@ -38,6 +38,5 @@ This is based from jaPRO soon to have some additions from JA++ and client suppor
 * Grapple Hook
 * God Mode
 * More admin commands
-* Another admin level
 * JK2 moves and roll.
 * And many more
