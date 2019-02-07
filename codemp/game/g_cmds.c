@@ -4606,17 +4606,22 @@ static void Cmd_Amstatus_f( gentity_t *ent )
 				*p = 0;
 			if (cl->sess.fullCouncil)
 				Q_strncpyz( strAdmin, "^3Council^7", sizeof(strAdmin));
-			if (cl->sess.fullKnight)
+			else if (cl->sess.fullKnight)
 				Q_strncpyz(strAdmin, "^5Knight^7", sizeof(strAdmin));
-			if (cl->sess.fullInstructor)
+			else if (cl->sess.fullInstructor)
 				Q_strncpyz(strAdmin, "^1Instructor^7", sizeof(strAdmin));			
 			else
 				Q_strncpyz(strAdmin, "^7None^7", sizeof(strAdmin));
-			if (g_entities[i].r.svFlags & SVF_BOT)
+			
+			if (g_entities[i].r.svFlags & SVF_BOT) {
 				Q_strncpyz(strPlugin, "^7Bot^7", sizeof(strPlugin));
-			else
+			}	
+			else {
 				Q_strncpyz(strPlugin, (cl->pers.isJAPRO) ? "^2Yes^7" : "^1No^7", sizeof(strPlugin));
-				tmpMsg = va( "%-5s%-18s^7%-14s%-14s%s^7\n", strNum, strIP, strPlugin, strAdmin, strName);
+			}
+			
+				tmpMsg = va( "%-5s%-18s^7%-14s%-16s%-18s^7\n", strNum, strIP, strPlugin, strAdmin, strName);
+				
 			if (strlen(msg) + strlen(tmpMsg) >= sizeof( msg)) {
 				trap->SendServerCommand( ent-g_entities, va("print \"%s\"", msg));
 				msg[0] = '\0';
