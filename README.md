@@ -1,8 +1,8 @@
-# jaPRO Lite Edition (Linux Server Side)
+# OpenJK Extra (Linux Server Side)
 
-## Direction of jaPRO Lite
+## Direction of OpenJK Extra
 
-This is based from jaPRO soon to have some additions from JA++ and client support from JA+/JA++/Japro.
+This is based from a fresh OpenJK source and selected code added from the jaPRO. 
 
 ## Features 
 
@@ -33,10 +33,9 @@ This is based from jaPRO soon to have some additions from JA++ and client suppor
 
 ## To be added
 
-* Emotes
 * Flipkick
 * Grapple Hook
 * God Mode
 * More admin commands
-* JK2 moves and roll.
+* JK2 moves and roll
 * And many more
