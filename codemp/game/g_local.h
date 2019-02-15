@@ -910,7 +910,7 @@ struct gclient_s {
 	//keep track of last person kicked and the time so we don't hit multiple times per kick
 	int			jediKickIndex;
 	int			jediKickTime;
-
+	qboolean 	emote_freeze;	//JAPRO - Amfreeze Anim
 	//special moves (designed for kyle boss npc, but useable by players in mp)
 	int			grappleIndex;
 	int			grappleState;

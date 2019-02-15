@@ -1554,7 +1554,8 @@ qboolean PM_AdjustAngleForWallRunUp( playerState_t *ps, usercmd_t *ucmd, qboolea
 						}
 					}
 				}
-				ucmd->forwardmove = 0;
+				if (!pmove_fixed.integer)//JAPRO Fix Pmove Wallrun
+					ucmd->forwardmove = 0;
 				return qtrue;
 			}
 		}
@@ -10375,15 +10376,39 @@ void PmoveSingle (pmove_t *pmove) {
 				}
 				pm->ps->forceHandExtend = HANDEXTEND_TAUNT;
 				pm->ps->forceHandExtendTime = pm->cmd.serverTime + 100;
-			}
-			if ( pm->ps->legsTimer > 0 || pm->ps->torsoTimer > 0 )
-			{
 				stiffenedUp = qtrue;
-				PM_SetPMViewAngle(pm->ps, pm->ps->viewangles, &pm->cmd);
+//[JAPRO - Serverside +clientside - Physics - Unlock bow movement/turning- Start]
+#ifdef CGAME
+				if (cgs.isJAPlus || cgs.isJAPro)
+				{
+				}
+				else
+				{
+					PM_SetPMViewAngle(pm->ps, pm->ps->viewangles, &pm->cmd);
+				}
+#endif
 				pm->cmd.rightmove = 0;
 				pm->cmd.upmove = 0;
 				pm->cmd.forwardmove = 0;
 				pm->cmd.buttons = 0;
+			}
+			else if ( pm->ps->legsTimer > 0 || pm->ps->torsoTimer > 0 )
+			{
+#ifdef CGAME
+				if (cgs.isJAPlus || cgs.isJAPro)
+				{
+				}
+				else
+				{
+					stiffenedUp = qtrue;
+					PM_SetPMViewAngle(pm->ps, pm->ps->viewangles, &pm->cmd);
+					pm->cmd.rightmove = 0;
+					pm->cmd.upmove = 0;
+					pm->cmd.forwardmove = 0;
+					pm->cmd.buttons = 0;
+				}
+#endif
+//[JAPRO - Serverside +clientside - Physics - Unlock bow movement/turning- End]
 			}
 		}
 	}
