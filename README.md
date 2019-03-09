@@ -15,6 +15,7 @@ This is based from a fresh OpenJK source and selected code added from the jaPRO.
 * Council, Knight and Instructor admin level
 * Clan chat support for scrims 
 * JKA/JO Saber Ghoul2Collision can be toggled on/off
+* Sabertouchdmg toggled
 * Clean compile
 
 ## Game Commands
