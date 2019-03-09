@@ -30,6 +30,7 @@ along with this program; if not, see <http://www.gnu.org/licenses/>.
 #include "icarus/GameInterface.h"
 #include "qcommon/timing.h"
 #include "NPCNav/navigator.h"
+#include "sv_gameapi.h"
 
 botlib_export_t	*botlib_export;
 
@@ -3137,6 +3138,9 @@ void SV_BindGame( void ) {
 		svs.gameStarted = qfalse;
 		Com_Error( ERR_DROP, "VM_CreateLegacy on game failed" );
 	}
+	
+		jampog::init(gvm);
+	
 }
 
 void SV_UnbindGame( void ) {

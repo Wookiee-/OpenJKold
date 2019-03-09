@@ -190,6 +190,20 @@ typedef struct client_s {
 	qboolean		csUpdated[MAX_CONFIGSTRINGS];
 
 	demoInfo_t		demo;
+	bool				nonsolid;
+	bool				noduelInProgress;
+	bool				noduelevent;
+	bool				drawduelers;
+	bool				drawothers;
+
+	void defaults() {
+		nonsolid = true;
+		noduelInProgress = true;
+		noduelevent = false;
+		drawduelers = true;
+		drawothers = false;
+	}	
+	
 } client_t;
 
 //=============================================================================
@@ -414,6 +428,8 @@ void BotImport_DebugPolygonDelete(int id);
 
 void SV_ClearWorld (void);
 // called after the world model has been loaded, before linking any entities
+
+bool DuelCull(sharedEntity_t *a, sharedEntity_t *b);
 
 void SV_UnlinkEntity( sharedEntity_t *ent );
 // call before removing an entity, and before trying to move one,

@@ -181,6 +181,7 @@ XCVAR_DEF( jcinfo, 						"0", 			NULL, 				CVAR_SERVERINFO|CVAR_ROM, 						qtrue
 XCVAR_DEF( g_emotesDisable, 			"0", 			NULL, 				CVAR_ARCHIVE, 									qtrue )
 
 XCVAR_DEF( g_slideOnPlayer, 			"1", 			CVU_Headslide, 		CVAR_ARCHIVE, 									qtrue )
+XCVAR_DEF( g_saberTouchDmg, 			"0", 			NULL, 				CVAR_ARCHIVE, 									qtrue )
 XCVAR_DEF( g_allowSaberSwitch, 			"0", 			NULL, 				CVAR_ARCHIVE, 									qtrue )
 XCVAR_DEF( g_duelStartHealth,			"0",			NULL,				CVAR_ARCHIVE,									qtrue )
 XCVAR_DEF( g_duelStartArmor, 			"0", 			NULL, 				CVAR_ARCHIVE, 									qtrue )
