@@ -1301,7 +1301,7 @@ static sharedEntity_t *flatten(sharedEntity_t *ent) {
 
 #if 1
 sharedEntity_t *flatten(sharedEntity_t *ent) {
-	auto parent = jampog::Entity(ent).parent_ptr();
+//	auto parent = jampog::Entity(ent).parent_ptr();
 	if (ent->s.eType == ET_MISSILE) {
 		//Com_Printf("ET_MISSILE\n");
 		return SV_GentityNum(ent->r.ownerNum);
@@ -1352,7 +1352,7 @@ sharedEntity_t *flatten(sharedEntity_t *ent) {
 	else if (auto e = valid_ent(ent->s.trickedentindex); e && e != ent) return e;
 	else if (auto e = valid_ent(ent->s.trickedentindex2); e && e != ent) return e;
 	else if (auto e = valid_ent(ent->r.singleClient); e && e != ent) return e;
-	else if (auto e = parent ? valid_ent(SV_NumForGentity(parent)) : nullptr; e && e != ent) return e;
+//	else if (auto e = parent ? valid_ent(SV_NumForGentity(parent)) : nullptr; e && e != ent) return e;
 	else return ent;
 }
 #endif
