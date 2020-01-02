@@ -2,7 +2,7 @@
 
 ## Direction of OpenJK Extra
 
-This is based from a fresh OpenJK source and selected code added from the jaPRO. 
+This is based from OpenJK source and selected code added from the jaPRO/EternalJK. I started this project to learn how OpenJK works but wanted to help those who play base on a regular basis.  
 
 ## Features 
 
@@ -17,6 +17,8 @@ This is based from a fresh OpenJK source and selected code added from the jaPRO.
 * JKA/JO Saber Ghoul2Collision can be toggled on/off
 * Sabertouchdmg toggled
 * Clean compile
+* Emotes (some doesn't work)
+* EternalJK openjkded for duel isolation and many more.
 
 ## Game Commands
 
@@ -32,11 +34,12 @@ This is based from a fresh OpenJK source and selected code added from the jaPRO.
 
 * Amlogin, Amlogout, Amtele, Amtelemark, Ammap, Npc, Amforceteam, Amlockteam, Aminfo, Amsay, AmStatus
 
-## To be added
+## To be added or fixed
 
-* Flipkick
-* Grapple Hook
-* God Mode
-* More admin commands
-* JK2 moves and roll
+* More admin commands like amban, amkick
+* Broken emotes
 * And many more
+
+## Dropbox OpenJK Binaries & Server Config
+
+* https://www.dropbox.com/sh/yc4lm58ft8kqsyl/AAA3LMsYFAL9NSdnFmiSQY1Oa?dl=0
