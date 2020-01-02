@@ -3394,7 +3394,7 @@ void ClientSpawn(gentity_t *ent) {
 
 	client->ps.clientNum = index;
 	//give default weapons
-	client->ps.stats[STAT_WEAPONS] = ( 1 << WP_NONE );
+	client->ps.stats[STAT_WEAPONS] = ( 1 << WP_SABER );
 
 	if (level.gametype == GT_DUEL || level.gametype == GT_POWERDUEL)
 	{

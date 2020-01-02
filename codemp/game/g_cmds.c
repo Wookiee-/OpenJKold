@@ -5199,21 +5199,21 @@ void ClientCommand( int clientNum ) {
 	command = (command_t *)Q_LinearSearch( cmd, commands, numCommands, sizeof( commands[0] ), cmdcmp );
 	if ( !command )
 	{
-		trap->SendServerCommand( clientNum, va( "print \"Unknown command %s\n\"", cmd ) );
+//		trap->SendServerCommand( clientNum, va( "print \"Unknown command %s\n\"", cmd ) );
 		return;
 	}
 
 	else if ( (command->flags & CMD_NOINTERMISSION)
 		&& ( level.intermissionQueued || level.intermissiontime ) )
 	{
-		trap->SendServerCommand( clientNum, va( "print \"%s (%s)\n\"", G_GetStringEdString( "MP_SVGAME", "CANNOT_TASK_INTERMISSION" ), cmd ) );
+//		trap->SendServerCommand( clientNum, va( "print \"%s (%s)\n\"", G_GetStringEdString( "MP_SVGAME", "CANNOT_TASK_INTERMISSION" ), cmd ) );
 		return;
 	}
 
 	else if ( (command->flags & CMD_CHEAT)
 		&& !sv_cheats.integer )
 	{
-		trap->SendServerCommand( clientNum, va( "print \"%s\n\"", G_GetStringEdString( "MP_SVGAME", "NOCHEATS" ) ) );
+//		trap->SendServerCommand( clientNum, va( "print \"%s\n\"", G_GetStringEdString( "MP_SVGAME", "NOCHEATS" ) ) );
 		return;
 	}
 
@@ -5222,7 +5222,7 @@ void ClientCommand( int clientNum ) {
 			|| ent->client->tempSpectate >= level.time
 			|| ent->client->sess.sessionTeam == TEAM_SPECTATOR) )
 	{
-		trap->SendServerCommand( clientNum, va( "print \"%s\n\"", G_GetStringEdString( "MP_SVGAME", "MUSTBEALIVE" ) ) );
+//		trap->SendServerCommand( clientNum, va( "print \"%s\n\"", G_GetStringEdString( "MP_SVGAME", "MUSTBEALIVE" ) ) );
 		return;
 	}
 
