@@ -68,7 +68,7 @@ svEntity_t	*SV_SvEntityForGentity( sharedEntity_t *gEnt ) {
 		Com_Printf( "%sSV_SvEntityForGentity: bad gEnt\n", S_COLOR_RED );
 	}
 	if (sv_legacyFixes->integer && !(sv_legacyFixes->integer & SVFIXES_ALLOW_GHOSTED_PLAYERS))
-		return &sv.svEntities[SV_NumForGentity(gEnt)];
+		return &sv.svEntities[gEnt->s.number];
 
 	return &sv.svEntities[gEnt->s.number];
 }

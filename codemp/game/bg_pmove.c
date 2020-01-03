@@ -1069,19 +1069,15 @@ static void PM_Friction( void ) {
 #ifdef _GAME
 		if (g_slideOnPlayer.integer)
 #else
-		if (cgs.isJAPro) {
-			if (cgs.jcinfo & JAPRO_CINFO_HEADSLIDE)
-				drop = 0;
-		}
-		else if (cgs.isJAPlus) {
-			if (cgs.cinfo & JAPLUS_CINFO_HEADSLIDE)
-				drop = 0;
+		if ((cgs.serverMod == SVMOD_JAPRO && !(cgs.jcinfo & JAPRO_CINFO_HEADSLIDE)) || (cgs.serverMod == SVMOD_JAPLUS && !(cgs.cinfo & JAPLUS_CINFO_HEADSLIDE)) || cgs.serverMod == SVMOD_BASEENHANCED)
+		{//no headslide, so do nothing
 		}
 		else
-#endif		
-		drop = 0;
+#endif
+		{
+			drop = 0;
+		}
 	}
-
 	if ( pm->ps->pm_type == PM_SPECTATOR || pm->ps->pm_type == PM_FLOAT )
 	{
 		if (pm->ps->pm_type == PM_FLOAT)
