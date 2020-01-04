@@ -178,7 +178,6 @@ XCVAR_DEF( timelimit,					"0",			NULL,				CVAR_SERVERINFO|CVAR_ARCHIVE|CVAR_NORE
 
 XCVAR_DEF( jcinfo, 						"0", 			NULL, 				CVAR_SERVERINFO|CVAR_ROM, 						qtrue ) //not a cvar, dont change it
 
-XCVAR_DEF( g_emotesDisable, 			"0", 			NULL, 				CVAR_ARCHIVE, 									qtrue )
 
 XCVAR_DEF( g_slideOnPlayer, 			"1", 			CVU_Headslide, 		CVAR_ARCHIVE, 									qtrue )
 XCVAR_DEF( g_saberTouchDmg, 			"0", 			NULL, 				CVAR_ARCHIVE, 									qtrue )

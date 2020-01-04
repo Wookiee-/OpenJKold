@@ -10374,8 +10374,8 @@ void PmoveSingle (pmove_t *pmove) {
 				pm->ps->forceHandExtendTime = pm->cmd.serverTime + 100;
 				stiffenedUp = qtrue;
 //[JAPRO - Serverside +clientside - Physics - Unlock bow movement/turning- Start]
-#ifdef CGAME
-				if (cgs.isJAPlus || cgs.isJAPro)
+#ifdef _CGAME
+				if (cgs.serverMod >= SVMOD_JAPLUS)
 				{
 				}
 				else
@@ -10383,15 +10383,16 @@ void PmoveSingle (pmove_t *pmove) {
 					PM_SetPMViewAngle(pm->ps, pm->ps->viewangles, &pm->cmd);
 				}
 #endif
+				//if emotedisable baseduel, lock player view here like in basejk
 				pm->cmd.rightmove = 0;
 				pm->cmd.upmove = 0;
 				pm->cmd.forwardmove = 0;
-				pm->cmd.buttons = 0;
+				//pm->cmd.buttons = 0; //let chatbox show in meditate
 			}
 			else if ( pm->ps->legsTimer > 0 || pm->ps->torsoTimer > 0 )
 			{
-#ifdef CGAME
-				if (cgs.isJAPlus || cgs.isJAPro)
+#ifdef _CGAME
+				if (cgs.serverMod >= SVMOD_JAPLUS)
 				{
 				}
 				else
