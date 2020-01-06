@@ -34,7 +34,7 @@ int AcceptBotCommand(char *cmd, gentity_t *pl);
 void WP_SetSaber( int entNum, saberInfo_t *sabers, int saberNum, const char *saberName );
 
 qboolean G_SaberModelSetup(gentity_t *ent);
-
+extern void AddIP( char *str );
 void Cmd_NPC_f( gentity_t *ent );
 void SetTeamQuick(gentity_t *ent, int team, qboolean doBegin);
 
@@ -3907,6 +3907,198 @@ void Cmd_Ammap_f(gentity_t *ent)
 }
 //[JAPRO - Serverside - All - Ammap Function - End]
 
+//[JAPRO - Serverside - All - Amvstr Function - Start]
+/*
+=================
+Cmd_Amvstr_f
+=================
+*/
+void Cmd_Amvstr_f(gentity_t *ent)
+{
+		char   arg[MAX_STRING_CHARS], buf[MAX_CVAR_VALUE_STRING];; 
+
+		if (!CheckAdminCmd(ent, A_VSTR, "amVstr"))
+			return;
+
+		if (trap->Argc() != 2) 
+		{ 
+			trap->SendServerCommand( ent-g_entities, "print \"Usage: /amVstr <vstr>.\n\"" );
+			return; 
+		}
+
+		trap->Argv(1, arg, sizeof(arg));
+
+		if (strchr(arg, ';') ||  strchr( arg,'\r') || strchr(arg, '\n'))
+		{
+			trap->SendServerCommand( ent-g_entities, "print \"Invalid vstr string.\n\"" );
+			return;
+		}
+
+		//clean the string?
+		Q_strlwr(arg);
+		Q_CleanStr(arg);
+
+		//Check if vstr exists, if not return qfalse.
+		trap->Cvar_VariableStringBuffer(arg, buf, sizeof(buf));
+		if (!Q_stricmp(buf, ""))
+			return;
+
+		trap->SendServerCommand( -1, va("print \"^3Vstr (%s^3) executed by ^7%s\n\"", arg, ent->client->pers.netname ));
+		G_LogPrintf ( "Vstr (%s^7) executed by ^7%s\n", arg, ent->client->pers.netname );
+		trap->SendConsoleCommand( EXEC_APPEND, va("vstr %s\n", arg));
+
+}
+//[JAPRO - Serverside - All - Amvstr Function - End]
+
+//amkillvote from raz0r start
+static void Cmd_Amkillvote_f( gentity_t *ent ) {
+
+	if (!CheckAdminCmd(ent, A_KILLVOTE, "amKillVote"))
+		return;
+
+	if (level.voteTime) //there is a vote in progress
+		trap->SendServerCommand( -1, "print \"" S_COLOR_RED "Vote has been killed!\n\"" );
+
+	//Overkill, but it's a surefire way to kill the vote =]
+	level.voteExecuteTime = 0;
+	level.votingGametype = qfalse;
+	level.votingGametypeTo = level.gametype;
+	level.voteTime = 0;
+
+	level.voteDisplayString[0] = '\0';
+	level.voteString[0] = '\0';
+
+	trap->SetConfigstring( CS_VOTE_TIME, "" );
+	trap->SetConfigstring( CS_VOTE_STRING, "" );
+	trap->SetConfigstring( CS_VOTE_YES, "" );
+	trap->SetConfigstring( CS_VOTE_NO, "" );
+}
+//amkillvote end
+
+//[JAPRO - Serverside - All - Ampsay Function - Start]
+/*
+=================
+Cmd_Ampsay_f
+=================
+*/
+void Cmd_Ampsay_f(gentity_t *ent)
+{
+		int pos = 0;
+		char real_msg[MAX_STRING_CHARS];
+		char *msg = ConcatArgs(1); 
+
+		if (!CheckAdminCmd(ent, A_CSPRINT, "amPsay"))
+			return;
+
+		while(*msg)
+		{ 
+			if(msg[0] == '\\' && msg[1] == 'n')
+			{ 
+				msg++;           // \n is 2 chars, so increase by one here. (one, cuz it's increased down there again...) 
+				real_msg[pos++] = '\n';  // put in a real \n 
+			} 
+			else 
+			{ 
+				  real_msg[pos++] = *msg;  // otherwise just copy 
+			} 
+			msg++;                         // increase the msg pointer 
+		}
+		real_msg[pos] = 0;
+
+		if (trap->Argc() < 2) 
+		{ 
+			trap->SendServerCommand( ent-g_entities, "print \"Usage: /amPsay <message>.\n\"" );
+			return; 
+		}
+
+		trap->SendServerCommand(-1, va("cp \"%s\"", real_msg));
+
+}
+//[JAPRO - Serverside - All - Ampsay Function - End]
+
+//[JAPRO - Serverside - All - Amkick Function - Start]
+ /*
+==================
+Cmd_Amkick_f
+==================
+*/
+void Cmd_Amkick_f(gentity_t *ent)
+{
+		int clientid = -1; 
+		char   arg[MAX_NETNAME]; 
+
+		if (!CheckAdminCmd(ent, A_ADMINKICK, "amKick"))
+			return;
+
+		if (trap->Argc() != 2) 
+        { 
+			trap->SendServerCommand( ent-g_entities, "print \"Usage: /amKick <client>.\n\"" );
+            return; 
+        } 
+
+		trap->Argv(1, arg, sizeof(arg)); 
+        clientid = JP_ClientNumberFromString(ent, arg);
+
+        if (clientid == -1 || clientid == -2)  
+        { 
+			return; 
+        } 
+
+				if ((g_entities[clientid].client && (g_entities[clientid].client->sess.fullCouncil)) || (ent->client->sess.fullKnight && g_entities[clientid].client->sess.fullKnight) || (ent->client->sess.fullInstructor && g_entities[clientid].client->sess.fullInstructor))
+		{
+			if (g_entities[clientid].client->ps.clientNum != ent->client->ps.clientNum)
+				return;
+			else
+				trap->SendServerCommand( ent-g_entities, "print \"You are not authorized to use this command on this player (amKick).\n\"" );
+		}
+
+		trap->SendConsoleCommand( EXEC_APPEND, va("clientkick %i", clientid) );
+
+}
+//[JAPRO - Serverside - All - Amkick Function - End]
+
+//[JAPRO - Serverside - All - Amban Function - Start]
+ /*
+==================
+Cmd_Amban_f
+==================
+*/
+void Cmd_Amban_f(gentity_t *ent)
+{
+		int clientid = -1; 
+		char   arg[MAX_NETNAME]; 
+
+		if (!CheckAdminCmd(ent, A_ADMINBAN, "amBan"))
+			return;
+
+		if (trap->Argc() != 2) 
+        { 
+			trap->SendServerCommand( ent-g_entities, "print \"Usage: /amBan <client>.\n\"" );
+            return; 
+        } 
+
+		trap->Argv(1, arg, sizeof(arg)); 
+        clientid = JP_ClientNumberFromString(ent, arg);
+
+        if (clientid == -1 || clientid == -2)  
+        { 
+			return; 
+        } 
+
+				if ((g_entities[clientid].client && (g_entities[clientid].client->sess.fullCouncil)) || (ent->client->sess.fullKnight && g_entities[clientid].client->sess.fullKnight) || (ent->client->sess.fullInstructor && g_entities[clientid].client->sess.fullInstructor))
+		{
+			if (g_entities[clientid].client->ps.clientNum != ent->client->ps.clientNum)
+				return;
+			else
+				trap->SendServerCommand( ent-g_entities, "print \"You are not authorized to use this command on this player (amBan).\n\"" );
+		}
+
+		AddIP(g_entities[clientid].client->sess.IP);
+		trap->SendConsoleCommand( EXEC_APPEND, va("clientkick %i", clientid) );
+
+}
+//[JAPRO - Serverside - All - Amban Function - End]
+
 //[JAPRO - Serverside - All - Amlogin Function - Start]
 /*
 =================
@@ -4560,6 +4752,36 @@ void Cmd_Aminfo_f(gentity_t *ent)
 			Q_strcat(buf, sizeof(buf), "amStatus ");
 		if ((ent->client->sess.fullInstructor) && (g_instructorAdminLevel.integer & (1 << A_STATUS))) 
 			Q_strcat(buf, sizeof(buf), "amStatus "); 
+		if ((ent->client->sess.fullCouncil) && (g_councilAdminLevel.integer & (1 << A_ADMINBAN))) 
+			Q_strcat(buf, sizeof(buf), "amBan "); 
+		if ((ent->client->sess.fullKnight) && (g_knightAdminLevel.integer & (1 << A_ADMINBAN))) 
+			Q_strcat(buf, sizeof(buf), "amBan ");
+		if ((ent->client->sess.fullInstructor) && (g_instructorAdminLevel.integer & (1 << A_ADMINBAN))) 
+			Q_strcat(buf, sizeof(buf), "amBan "); 
+		if ((ent->client->sess.fullCouncil) && (g_councilAdminLevel.integer & (1 << A_ADMINKICK))) 
+			Q_strcat(buf, sizeof(buf), "amKick "); 
+		if ((ent->client->sess.fullKnight) && (g_knightAdminLevel.integer & (1 << A_ADMINKICK))) 
+			Q_strcat(buf, sizeof(buf), "amKick ");
+		if ((ent->client->sess.fullInstructor) && (g_instructorAdminLevel.integer & (1 << A_ADMINKICK))) 
+			Q_strcat(buf, sizeof(buf), "amKick "); 
+		if ((ent->client->sess.fullCouncil) && (g_councilAdminLevel.integer & (1 << A_VSTR))) 
+			Q_strcat(buf, sizeof(buf), "amVstr "); 
+		if ((ent->client->sess.fullKnight) && (g_knightAdminLevel.integer & (1 << A_VSTR))) 
+			Q_strcat(buf, sizeof(buf), "amVstr ");
+		if ((ent->client->sess.fullInstructor) && (g_instructorAdminLevel.integer & (1 << A_VSTR))) 
+			Q_strcat(buf, sizeof(buf), "amVstr "); 
+		if ((ent->client->sess.fullCouncil) && (g_councilAdminLevel.integer & (1 << A_CSPRINT))) 
+			Q_strcat(buf, sizeof(buf), "amPsay "); 
+		if ((ent->client->sess.fullKnight) && (g_knightAdminLevel.integer & (1 << A_CSPRINT))) 
+			Q_strcat(buf, sizeof(buf), "amPsay ");
+		if ((ent->client->sess.fullInstructor) && (g_instructorAdminLevel.integer & (1 << A_CSPRINT))) 
+			Q_strcat(buf, sizeof(buf), "amPsay "); 
+		if ((ent->client->sess.fullCouncil) && (g_councilAdminLevel.integer & (1 << A_KILLVOTE))) 
+			Q_strcat(buf, sizeof(buf), "amKillVote "); 
+		if ((ent->client->sess.fullKnight) && (g_knightAdminLevel.integer & (1 << A_KILLVOTE))) 
+			Q_strcat(buf, sizeof(buf), "amKillVote ");
+		if ((ent->client->sess.fullInstructor) && (g_instructorAdminLevel.integer & (1 << A_KILLVOTE))) 
+			Q_strcat(buf, sizeof(buf), "amKillVote "); 
 		trap->SendServerCommand(ent-g_entities, va("print \"%s\n\"", buf));
 		buf[0] = '\0';
 	}
@@ -4691,18 +4913,22 @@ int cmdcmp( const void *a, const void *b ) {
 
 command_t commands[] = {
 	{ "addbot",				Cmd_AddBot_f,				0 },
-
+	{ "amban",				Cmd_Amban_f,				0 },
 	{ "amlogin",			Cmd_Amlogin_f,				0 },
 	{ "amforceteam", 		Cmd_Amforceteam_f, 			CMD_NOINTERMISSION },
-	{ "aminfo", 			Cmd_Aminfo_f, 				0 },	
+	{ "aminfo", 			Cmd_Aminfo_f, 				0 },
+	{ "amkick",				Cmd_Amkick_f,				0 },
+	{ "amkillvote",			Cmd_Amkillvote_f,			0 },	
 	{ "amlockteam", 		Cmd_Amlockteam_f, 			CMD_NOINTERMISSION },	
 	{ "amlogout", 			Cmd_Amlogout_f, 			0 },
 	{ "ammap", 				Cmd_Ammap_f, 				CMD_NOINTERMISSION },
 	{ "ammotd",				Cmd_Showmotd_f, 			CMD_NOINTERMISSION },
+	{ "ampsay",				Cmd_Ampsay_f,				CMD_NOINTERMISSION },
 	{ "amsay", 				Cmd_Amsay_f, 				0 },
 	{ "amstatus",			Cmd_Amstatus_f,				0 },
 	{ "amtele",				Cmd_Amtele_f,				CMD_NOINTERMISSION },
 	{ "amtelemark", 		Cmd_Amtelemark_f, 			CMD_NOINTERMISSION },
+	{ "amvstr",				Cmd_Amvstr_f,				CMD_NOINTERMISSION },
 	{ "callteamvote",		Cmd_CallTeamVote_f,			CMD_NOINTERMISSION },
 	{ "callvote",			Cmd_CallVote_f,				CMD_NOINTERMISSION },
 	{ "clanpass",			Cmd_Clanpass_f,				CMD_NOINTERMISSION },
