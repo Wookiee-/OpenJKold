@@ -235,8 +235,8 @@ elseif (("${CMAKE_C_COMPILER_ID}" STREQUAL "GNU") OR ("${CMAKE_C_COMPILER_ID}" M
      #           set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -mno-sse2")
 	endif()
 
-	set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} -O3")
-	set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -O3")
+#	set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} -O3")
+#	set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -O3")
 
 	# enable somewhat modern C++
 	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -std=c++1z")
@@ -251,7 +251,7 @@ elseif (("${CMAKE_C_COMPILER_ID}" STREQUAL "GNU") OR ("${CMAKE_C_COMPILER_ID}" M
 			# corrupt the frame pointer in VM calls"
 			# -ioquake3 Makefile
 			set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -mstackrealign")
-			set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -march=i386")
+#			set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -march=i386")
 	  #              set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -mno-sse")
        # 	        set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -mno-sse2")
 
@@ -276,7 +276,7 @@ elseif (("${CMAKE_C_COMPILER_ID}" STREQUAL "GNU") OR ("${CMAKE_C_COMPILER_ID}" M
 		set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fsigned-char")
 		if (X86)
 			set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -mstackrealign")
-			set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -march=i386")
+#			set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -march=i386")
      #   	        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -mno-sse")
 	 #               set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -mno-sse2")
 
