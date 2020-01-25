@@ -3481,7 +3481,7 @@ void Cmd_DebugSetBodyAnim_f(gentity_t *self)
 }
 #endif
 
-void StandardSetBodyAnim(gentity_t *self, int anim, int flags)
+void StandardSetBodyAnim(gentity_t *self, int anim, int flags, int body)
 {
 	G_SetAnim(self, NULL, SETANIM_BOTH, anim, flags, 0);
 }
@@ -3719,6 +3719,358 @@ void Cmd_Clanwhois_f( gentity_t *ent ) { //Should this only show logged in peopl
 }
 //[JAPRO - Serverside - All - Clanwhois Function - End]
 
+extern qboolean BG_InKnockDown( int anim ); //bg_pmove.c
+static void DoEmote(gentity_t *ent, int anim, qboolean freeze, qboolean nosaber, int body)
+{
+	if (!ent->client)
+		return;
+	if (ent->client->ps.weaponTime > 1 || ent->client->ps.saberMove > 1 || ent->client->ps.fd.forcePowersActive)
+		return;
+	if (ent->client->ps.groundEntityNum == ENTITYNUM_NONE) //Not on ground
+		return;
+	if (ent->client->ps.duelInProgress) {
+		trap->SendServerCommand(ent-g_entities, "print \"^7Emotes not allowed in duel!\n\"");
+		return;
+	}
+	if (BG_InKnockDown(ent->s.legsAnim))
+		return;
+	if (BG_InRoll(&ent->client->ps, ent->s.legsAnim))//is this crashing? if ps is null or something?
+		return;
+	if (level.gametype != GT_FFA) {
+		trap->SendServerCommand(ent-g_entities, "print \"^7Emotes not allowed in this gametype!\n\"");
+		return;
+	}
+
+	if (freeze) { // Do the anim and freeze it, or cancel if already in it
+		if (ent->client->ps.legsAnim == anim) // Cancel the anim if already in it?
+			ent->client->emote_freeze = qfalse;
+		else //Do the anim
+			ent->client->emote_freeze = qtrue;
+	}
+	if (nosaber && ent->client->ps.weapon == WP_SABER && ent->client->ps.saberHolstered < 2) {
+		ent->client->ps.saberCanThrow = qfalse;
+		ent->client->ps.saberMove = LS_NONE;
+		ent->client->ps.saberBlocked = 0;
+		ent->client->ps.saberBlocking = 0;
+		ent->client->ps.saberHolstered = 2;
+		if (ent->client->saber[0].soundOff)
+			G_Sound(ent, CHAN_AUTO, ent->client->saber[0].soundOff);
+		if (ent->client->saber[1].soundOff && ent->client->saber[1].model[0])
+			G_Sound(ent, CHAN_AUTO, ent->client->saber[1].soundOff);
+	}
+	StandardSetBodyAnim(ent, anim, SETANIM_FLAG_OVERRIDE|SETANIM_FLAG_HOLD|SETANIM_FLAG_HOLDLESS, body);
+}
+
+static void Cmd_EmoteSit_f(gentity_t *ent)
+{
+	if (g_emotesDisable.integer & (1 << E_SIT)) {
+		trap->SendServerCommand(ent-g_entities, "print \"This emote is not allowed on this server.\n\"");
+		return;
+	}
+	DoEmote(ent, BOTH_SIT1, qtrue, qtrue, SETANIM_BOTH);
+}
+
+static void Cmd_EmoteSit2_f(gentity_t *ent)
+{
+	if (g_emotesDisable.integer & (1 << E_SIT)) {
+		trap->SendServerCommand(ent-g_entities, "print \"This emote is not allowed on this server.\n\"");
+		return;
+	}
+	DoEmote(ent, BOTH_SIT3, qtrue, qtrue, SETANIM_BOTH);
+}
+
+static void Cmd_EmoteSit3_f(gentity_t *ent)
+{
+	if (g_emotesDisable.integer & (1 << E_SIT)) {
+		trap->SendServerCommand(ent-g_entities, "print \"This emote is not allowed on this server.\n\"");
+		return;
+	}
+	DoEmote(ent, BOTH_SIT6, qtrue, qtrue, SETANIM_BOTH);
+}
+
+static void Cmd_EmoteSit4_f(gentity_t *ent)
+{
+	if (g_emotesDisable.integer & (1 << E_SIT)) {
+		trap->SendServerCommand(ent-g_entities, "print \"This emote is not allowed on this server.\n\"");
+		return;
+	}
+	DoEmote(ent, BOTH_SIT2, qtrue, qtrue, SETANIM_BOTH);
+}
+
+static void Cmd_EmoteSurrender_f(gentity_t *ent)
+{
+	if (g_emotesDisable.integer & (1 << E_SURRENDER)) {
+		trap->SendServerCommand(ent-g_entities, "print \"This emote is not allowed on this server.\n\"");
+		return;
+	}
+	DoEmote(ent, TORSO_SURRENDER_START, qtrue, qtrue, SETANIM_BOTH);
+}
+
+static void Cmd_EmoteCheer_f(gentity_t *ent)
+{
+	if (g_emotesDisable.integer & (1 << E_CHEER)) {
+		trap->SendServerCommand(ent-g_entities, "print \"This emote is not allowed on this server.\n\"");
+		return;
+	}
+	DoEmote(ent, BOTH_TUSKENTAUNT1, qfalse, qtrue, SETANIM_BOTH);
+}
+
+static void Cmd_EmoteTaunt_f(gentity_t *ent)
+{
+	if (g_emotesDisable.integer & (1 << E_TAUNT)) {
+		trap->SendServerCommand(ent-g_entities, "print \"This emote is not allowed on this server.\n\"");
+		return;
+	}
+	DoEmote(ent, BOTH_ALORA_TAUNT, qfalse, qfalse, SETANIM_BOTH);
+}
+
+static void Cmd_EmoteVictory_f(gentity_t *ent)
+{
+	if (g_emotesDisable.integer & (1 << E_VICTORY)) {
+		trap->SendServerCommand(ent-g_entities, "print \"This emote is not allowed on this server.\n\"");
+		return;
+	}
+	DoEmote(ent, BOTH_TAVION_SCEPTERGROUND, qfalse, qfalse, SETANIM_BOTH);
+}
+
+static void Cmd_EmoteRage_f(gentity_t *ent)
+{
+	if (g_emotesDisable.integer & (1 << E_RAGE)) {
+		trap->SendServerCommand(ent-g_entities, "print \"This emote is not allowed on this server.\n\"");
+		return;
+	}
+	DoEmote(ent, BOTH_FORCE_RAGE, qfalse, qfalse, SETANIM_BOTH);
+}
+
+static void Cmd_EmoteSmack_f(gentity_t *ent)
+{
+	if (g_emotesDisable.integer & (1 << E_SMACK)) {
+		trap->SendServerCommand(ent-g_entities, "print \"This emote is not allowed on this server.\n\"");
+		return;
+	}
+	DoEmote(ent, BOTH_TOSS1, qfalse, qfalse, SETANIM_BOTH);
+}
+
+static void Cmd_EmoteCower_f(gentity_t *ent)
+{
+	if (g_emotesDisable.integer & (1 << E_COWER)) {
+		trap->SendServerCommand(ent-g_entities, "print \"This emote is not allowed on this server.\n\"");
+		return;
+	}
+	DoEmote(ent, BOTH_COWER1, qfalse, qtrue, SETANIM_BOTH);
+}
+
+
+static void Cmd_EmoteNoisy_f(gentity_t *ent)
+{
+	if (g_emotesDisable.integer & (1 << E_NOISY)) {
+		trap->SendServerCommand(ent-g_entities, "print \"This emote is not allowed on this server.\n\"");
+		return;
+	}
+	DoEmote(ent, BOTH_SONICPAIN_HOLD, qfalse, qtrue, SETANIM_BOTH);
+}
+
+static void Cmd_EmoteHug_f(gentity_t *ent)
+{
+	if (g_emotesDisable.integer & (1 << E_HUG)) {
+		trap->SendServerCommand(ent-g_entities, "print \"This emote is not allowed on this server.\n\"");
+		return;
+	}
+	DoEmote(ent, BOTH_HUGGER1, qfalse, qtrue, SETANIM_BOTH);
+}
+
+static void Cmd_EmoteBeg_f(gentity_t *ent)
+{
+	if (g_emotesDisable.integer & (1 << E_BEG)) {
+		trap->SendServerCommand(ent-g_entities, "print \"This emote is not allowed on this server.\n\"");
+		return;
+	}
+	DoEmote(ent, BOTH_KNEES1, qtrue, qtrue, SETANIM_BOTH);
+}
+
+static void Cmd_EmoteBeg2_f(gentity_t *ent)
+{
+	if (g_emotesDisable.integer & (1 << E_BEG2)) {
+		trap->SendServerCommand(ent-g_entities, "print \"This emote is not allowed on this server.\n\"");
+		return;
+	}
+	DoEmote(ent, BOTH_KNEES2, qtrue, qtrue, SETANIM_BOTH);
+}
+
+static void Cmd_EmoteBernie_f(gentity_t *ent)
+{
+	if (g_emotesDisable.integer & (1 << E_BERNIE)) {
+		trap->SendServerCommand(ent-g_entities, "print \"This emote is not allowed on this server.\n\"");
+		return;
+	}
+	DoEmote(ent, BOTH_FORCE_DRAIN_GRABBED, qtrue, qfalse, SETANIM_BOTH);
+}
+
+static void Cmd_EmoteBreakdance_f(gentity_t *ent)
+{
+	if (g_emotesDisable.integer & (1 << E_BREAKDANCE)) {
+		trap->SendServerCommand(ent-g_entities, "print \"This emote is not allowed on this server.\n\"");
+		return;
+	}
+	DoEmote(ent, BOTH_FORCE_GETUP_B2, qfalse, qtrue, SETANIM_BOTH);
+}
+
+static void Cmd_EmoteBreakdance2_f(gentity_t *ent)
+{
+	if (g_emotesDisable.integer & (1 << E_BREAKDANCE)) {
+		trap->SendServerCommand(ent-g_entities, "print \"This emote is not allowed on this server.\n\"");
+		return;
+	}
+	DoEmote(ent, BOTH_FORCE_GETUP_B4, qfalse, qtrue, SETANIM_BOTH);
+}
+
+static void Cmd_EmoteBreakdance3_f(gentity_t *ent)
+{
+	if (g_emotesDisable.integer & (1 << E_BREAKDANCE)) {
+		trap->SendServerCommand(ent-g_entities, "print \"This emote is not allowed on this server.\n\"");
+		return;
+	}
+	DoEmote(ent, BOTH_FORCE_GETUP_B5, qfalse, qtrue, SETANIM_BOTH);
+}
+
+static void Cmd_EmoteBreakdance4_f(gentity_t *ent)
+{
+	if (g_emotesDisable.integer & (1 << E_BREAKDANCE)) {
+		trap->SendServerCommand(ent-g_entities, "print \"This emote is not allowed on this server.\n\"");
+		return;
+	}
+	DoEmote(ent, BOTH_FORCE_GETUP_B6, qfalse, qtrue, SETANIM_BOTH);
+}
+
+static void Cmd_EmoteTaunt2_f(gentity_t *ent)
+{
+	if (g_emotesDisable.integer & (1 << E_TAUNT)) {
+		trap->SendServerCommand(ent-g_entities, "print \"This emote is not allowed on this server.\n\"");
+		return;
+	}
+	DoEmote(ent, BOTH_SCEPTER_HOLD, qfalse, qfalse, SETANIM_BOTH);
+}
+
+static void Cmd_EmoteSit5_f(gentity_t *ent)
+{
+	if (g_emotesDisable.integer & (1 << E_SIT)) {
+		trap->SendServerCommand(ent-g_entities, "print \"This emote is not allowed on this server.\n\"");
+		return;
+	}
+	DoEmote(ent, BOTH_SLEEP6STOP, qtrue, qtrue, SETANIM_BOTH);
+}
+
+static void Cmd_EmoteSleep_f(gentity_t *ent)
+{
+	if (g_emotesDisable.integer & (1 << E_SLEEP)) {
+		trap->SendServerCommand(ent-g_entities, "print \"This emote is not allowed on this server.\n\"");
+		return;
+	}
+	DoEmote(ent, BOTH_SLEEP1, qtrue, qtrue, SETANIM_BOTH);
+}
+
+static void Cmd_EmoteDance_f(gentity_t *ent)
+{
+	if (g_emotesDisable.integer & (1 << E_DANCE)) {
+		trap->SendServerCommand(ent-g_entities, "print \"This emote is not allowed on this server.\n\"");
+		return;
+	}
+	DoEmote(ent, BOTH_STEADYSELF1, qfalse, qtrue, SETANIM_BOTH);
+}
+
+static void Cmd_EmotePoint_f(gentity_t *ent)
+{
+	if (g_emotesDisable.integer & (1 << E_POINT)) {
+		trap->SendServerCommand(ent-g_entities, "print \"This emote is not allowed on this server.\n\"");
+		return;
+	}
+	DoEmote(ent, BOTH_STAND5TOAIM, qtrue, qfalse, SETANIM_BOTH);
+}
+
+/*
+static void Cmd_EmoteSheev_f(gentity_t *ent) {
+	if (g_emotesDisable.integer & (1 << E_SHEEV)) {
+		trap->SendServerCommand(ent-g_entities, "print \"This emote is not allowed on this server.\n\"");
+		return;
+	}
+	DoEmote(ent, BOTH_GETUP_BROLL_L, qfalse, qfalse, SETANIM_BOTH);
+	//Play sound
+	//Turn them around
+	//Launch them
+	//Turn them back
+	//Stop it from moving them in the standard way
+}
+*/
+
+static void Cmd_EmoteSignal1_f(gentity_t *ent) {
+	if (g_emotesDisable.integer & (1 << E_SIGNAL)) {
+		trap->SendServerCommand(ent-g_entities, "print \"This emote is not allowed on this server.\n\"");
+		return;
+	}
+	DoEmote(ent, TORSO_HANDSIGNAL1, qfalse, qfalse, SETANIM_BOTH);
+}
+
+static void Cmd_EmoteSignal2_f(gentity_t *ent) {
+	if (g_emotesDisable.integer & (1 << E_SIGNAL)) {
+		trap->SendServerCommand(ent-g_entities, "print \"This emote is not allowed on this server.\n\"");
+		return;
+	}
+	DoEmote(ent, TORSO_HANDSIGNAL2, qfalse, qfalse, SETANIM_BOTH);
+}
+
+static void Cmd_EmoteSignal3_f(gentity_t *ent) {
+	if (g_emotesDisable.integer & (1 << E_SIGNAL)) {
+		trap->SendServerCommand(ent-g_entities, "print \"This emote is not allowed on this server.\n\"");
+		return;
+	}
+	DoEmote(ent, TORSO_HANDSIGNAL3, qfalse, qfalse, SETANIM_BOTH);
+}
+
+static void Cmd_EmoteSignal4_f(gentity_t *ent) {
+	if (g_emotesDisable.integer & (1 << E_SIGNAL)) {
+		trap->SendServerCommand(ent-g_entities, "print \"This emote is not allowed on this server.\n\"");
+		return;
+	}
+	DoEmote(ent, TORSO_HANDSIGNAL4, qfalse, qfalse, SETANIM_BOTH);
+}
+
+static void Cmd_EmoteSaberFlip_f(gentity_t *ent)
+{
+	if (!ent->client || ent->client->ps.weapon != WP_SABER) //Dont allow if saber isnt out? eh
+		return;
+
+	if (g_emotesDisable.integer & (1 << E_SABERFLIP)) {
+		trap->SendServerCommand(ent-g_entities, "print \"This emote is not allowed on this server.\n\"");
+		return;
+	}
+
+	if (ent->client->ps.fd.saberAnimLevel == SS_FAST || ent->client->ps.fd.saberAnimLevel == SS_MEDIUM || ent->client->ps.fd.saberAnimLevel == SS_STRONG) { //Get style, do specific anim
+		if (ent->client->ps.saberHolstered)
+			DoEmote(ent, BOTH_STAND1TO2, qfalse, qfalse, SETANIM_BOTH);
+		else
+			DoEmote(ent, BOTH_STAND2TO1, qfalse, qfalse, SETANIM_BOTH);
+	}
+	else if (ent->client->ps.fd.saberAnimLevel == SS_STAFF) {
+		if (ent->client->ps.saberHolstered)
+			DoEmote(ent, BOTH_S1_S7, qfalse, qfalse, SETANIM_BOTH);
+		else
+			DoEmote(ent, BOTH_SHOWOFF_STAFF, qfalse, qfalse, SETANIM_BOTH);
+	}
+	else if (ent->client->ps.fd.saberAnimLevel == SS_DUAL) {
+		DoEmote(ent, BOTH_SHOWOFF_FAST, qfalse, qfalse, SETANIM_BOTH);
+	}
+
+	Cmd_ToggleSaber_f(ent);
+}
+
+static void Cmd_EmoteSlap_f(gentity_t *ent)
+{
+	if (g_emotesDisable.integer & (1 << E_SLAP)) {
+		trap->SendServerCommand(ent-g_entities, "print \"This emote is not allowed on this server.\n\"");
+		return;
+	}
+	DoEmote(ent, BOTH_FORCEGRIP3THROW, qfalse, qfalse, SETANIM_BOTH);
+}
 
 //[JAPRO - Serverside - All - Saber change Function - Start]
 void Cmd_Saber_f(gentity_t *ent)
@@ -4646,7 +4998,7 @@ void Cmd_Aminfo_f(gentity_t *ent)
 	if (!ent || !ent->client)
 		return;
 
-	Q_strncpyz(buf, va("^5 Hi there, %s^5. This server is using OpenJK Extra.\n", ent->client->pers.netname), sizeof(buf));
+	Q_strncpyz(buf, va("^5 Hi there, %s^5. This server is using OpenJK.\n", ent->client->pers.netname), sizeof(buf));
 	Q_strcat(buf, sizeof(buf), "   ^3To display server settings, type ^7serverConfig" );
 	trap->SendServerCommand(ent-g_entities, va("print \"%s\n\"", buf));
 	
@@ -4663,6 +5015,50 @@ void Cmd_Aminfo_f(gentity_t *ent)
 	if (g_allowSaberSwitch.integer) 
 		Q_strcat(buf, sizeof(buf), "saber ");
 	trap->SendServerCommand(ent-g_entities, va("print \"%s\n\"", buf));
+
+	Q_strncpyz(buf, "   ^3Emote commands: ", sizeof(buf));
+	if (!(g_emotesDisable.integer & (1 << E_BEG)))
+		Q_strcat(buf, sizeof(buf), "amBeg "); 
+	if (!(g_emotesDisable.integer & (1 << E_BEG2)))
+		Q_strcat(buf, sizeof(buf), "amBeg2 "); 
+	if (!(g_emotesDisable.integer & (1 << E_BERNIE)))
+		Q_strcat(buf, sizeof(buf), "amBernie "); 
+	if (!(g_emotesDisable.integer & (1 << E_BREAKDANCE)))
+		Q_strcat(buf, sizeof(buf), "amBreakdance[2/3/4] "); 
+	if (!(g_emotesDisable.integer & (1 << E_CHEER)))
+		Q_strcat(buf, sizeof(buf), "amCheer "); 
+	if (!(g_emotesDisable.integer & (1 << E_COWER)))
+		Q_strcat(buf, sizeof(buf), "amCower "); 
+	if (!(g_emotesDisable.integer & (1 << E_DANCE)))
+		Q_strcat(buf, sizeof(buf), "amDance "); 
+	if (!(g_emotesDisable.integer & (1 << E_HUG)))
+		Q_strcat(buf, sizeof(buf), "amHug "); 
+	if (!(g_emotesDisable.integer & (1 << E_SABERFLIP)))
+		Q_strcat(buf, sizeof(buf), "amFlip "); 
+	if (!(g_emotesDisable.integer & (1 << E_NOISY)))
+		Q_strcat(buf, sizeof(buf), "amNoisy "); 
+	if (!(g_emotesDisable.integer & (1 << E_POINT)))
+		Q_strcat(buf, sizeof(buf), "amPoint\n                   "); 
+	if (!(g_emotesDisable.integer & (1 << E_RAGE)))
+		Q_strcat(buf, sizeof(buf), "amRage "); 
+	if (!(g_emotesDisable.integer & (1 << E_SIGNAL)))
+		Q_strcat(buf, sizeof(buf), "amSignal[2/3/4] "); 
+	if (!(g_emotesDisable.integer & (1 << E_SIT)))
+		Q_strcat(buf, sizeof(buf), "amSit[2/3/4/5] "); 
+	if (!(g_emotesDisable.integer & (1 << E_SLAP)))
+		Q_strcat(buf, sizeof(buf), "amSlap "); 
+	if (!(g_emotesDisable.integer & (1 << E_SLEEP)))
+		Q_strcat(buf, sizeof(buf), "amSleep "); 
+	if (!(g_emotesDisable.integer & (1 << E_SURRENDER)))
+		Q_strcat(buf, sizeof(buf), "amSurrender "); 
+	if (!(g_emotesDisable.integer & (1 << E_SMACK)))
+		Q_strcat(buf, sizeof(buf), "amSmack "); 
+	if (!(g_emotesDisable.integer & (1 << E_TAUNT)))
+		Q_strcat(buf, sizeof(buf), "amTaunt[2] "); 
+	if (!(g_emotesDisable.integer & (1 << E_VICTORY)))
+		Q_strcat(buf, sizeof(buf), "amVictory ");  
+	
+	trap->SendServerCommand(ent-g_entities, va("print \"%s\n\"", buf));	
 	
 	Q_strncpyz(buf, "   ^3Admin commands: ", sizeof(buf));
 	if (!(ent->client->sess.fullCouncil)  && !(ent->client->sess.fullInstructor) && !(ent->client->sess.fullKnight))
@@ -4865,20 +5261,51 @@ int cmdcmp( const void *a, const void *b ) {
 
 command_t commands[] = {
 	{ "addbot",				Cmd_AddBot_f,				0 },
-	{ "amlogin",			Cmd_Amlogin_f,				0 },
+	{ "ambeg",				Cmd_EmoteBeg_f,				CMD_NOINTERMISSION|CMD_ALIVE },//EMOTE
+	{ "ambeg2",				Cmd_EmoteBeg2_f,			CMD_NOINTERMISSION|CMD_ALIVE },//EMOTE
+	{ "ambernie",			Cmd_EmoteBernie_f,			CMD_NOINTERMISSION|CMD_ALIVE },//EMOTE
+	{ "ambreakdance",		Cmd_EmoteBreakdance_f,		CMD_NOINTERMISSION|CMD_ALIVE },//EMOTE
+	{ "ambreakdance2",		Cmd_EmoteBreakdance2_f,		CMD_NOINTERMISSION|CMD_ALIVE },//EMOTE
+	{ "ambreakdance3",		Cmd_EmoteBreakdance3_f,		CMD_NOINTERMISSION|CMD_ALIVE },//EMOTE
+	{ "ambreakdance4",		Cmd_EmoteBreakdance4_f,		CMD_NOINTERMISSION|CMD_ALIVE },//EMOTE
+	{ "amcheer",			Cmd_EmoteCheer_f,			CMD_NOINTERMISSION|CMD_ALIVE },//EMOTE
+	{ "amcower",			Cmd_EmoteCower_f,			CMD_NOINTERMISSION|CMD_ALIVE },//EMOTE
+	{ "amdance",			Cmd_EmoteDance_f,			CMD_NOINTERMISSION|CMD_ALIVE },//EMOTE
+	{ "amflip", 			Cmd_EmoteSaberFlip_f, 		CMD_NOINTERMISSION|CMD_ALIVE },//EMOTE	
+	{ "amhug", 				Cmd_EmoteHug_f, 			CMD_NOINTERMISSION|CMD_ALIVE },//EMOTE	
 	{ "amforceteam", 		Cmd_Amforceteam_f, 			CMD_NOINTERMISSION },
 	{ "aminfo", 			Cmd_Aminfo_f, 				0 },
 	{ "amkick",				Cmd_Amkick_f,				0 },
 	{ "amkillvote",			Cmd_Amkillvote_f,			0 },	
 	{ "amlockteam", 		Cmd_Amlockteam_f, 			CMD_NOINTERMISSION },	
+	{ "amlogin",			Cmd_Amlogin_f,				0 },
 	{ "amlogout", 			Cmd_Amlogout_f, 			0 },
 	{ "ammap", 				Cmd_Ammap_f, 				CMD_NOINTERMISSION },
 	{ "ammotd",				Cmd_Showmotd_f, 			CMD_NOINTERMISSION },
+	{ "amnoisy",			Cmd_EmoteNoisy_f,			CMD_NOINTERMISSION|CMD_ALIVE },//EMOTE
+	{ "ampoint", 			Cmd_EmotePoint_f, 			CMD_NOINTERMISSION|CMD_ALIVE },//EMOTE
+	{ "amrage", 			Cmd_EmoteRage_f, 			CMD_NOINTERMISSION|CMD_ALIVE },//EMOTE
 	{ "ampsay",				Cmd_Ampsay_f,				CMD_NOINTERMISSION },
 	{ "amsay", 				Cmd_Amsay_f, 				0 },
+	{ "amsignal",			Cmd_EmoteSignal1_f,			CMD_NOINTERMISSION|CMD_ALIVE },//EMOTE
+	{ "amsignal2",			Cmd_EmoteSignal2_f,			CMD_NOINTERMISSION|CMD_ALIVE },//EMOTE
+	{ "amsignal3",			Cmd_EmoteSignal3_f,			CMD_NOINTERMISSION|CMD_ALIVE },//EMOTE
+	{ "amsignal4",			Cmd_EmoteSignal4_f,			CMD_NOINTERMISSION|CMD_ALIVE },//EMOTE
+	{ "amsit",				Cmd_EmoteSit_f,				CMD_NOINTERMISSION|CMD_ALIVE },//EMOTE
+	{ "amsit2",				Cmd_EmoteSit2_f,			CMD_NOINTERMISSION|CMD_ALIVE },//EMOTE
+	{ "amsit3",				Cmd_EmoteSit3_f,			CMD_NOINTERMISSION|CMD_ALIVE },//EMOTE
+	{ "amsit4",				Cmd_EmoteSit4_f,			CMD_NOINTERMISSION|CMD_ALIVE },//EMOTE
+	{ "amsit5",				Cmd_EmoteSit5_f,			CMD_NOINTERMISSION|CMD_ALIVE },//EMOTE
+	{ "amslap",				Cmd_EmoteSlap_f,			CMD_NOINTERMISSION|CMD_ALIVE },//EMOTE
+	{ "amsleep",			Cmd_EmoteSleep_f,			CMD_NOINTERMISSION|CMD_ALIVE },//EMOTE
+	{ "amsmack", 			Cmd_EmoteSmack_f, 			CMD_NOINTERMISSION|CMD_ALIVE },//EMOTE	
 	{ "amstatus",			Cmd_Amstatus_f,				0 },
+	{ "amsurrender",		Cmd_EmoteSurrender_f,		CMD_NOINTERMISSION|CMD_ALIVE },//EMOTE
+	{ "amtaunt",			Cmd_EmoteTaunt_f,			CMD_NOINTERMISSION|CMD_ALIVE },//EMOTE
+	{ "amtaunt2", 			Cmd_EmoteTaunt2_f, 			CMD_NOINTERMISSION|CMD_ALIVE },//EMOTE	
 	{ "amtele",				Cmd_Amtele_f,				CMD_NOINTERMISSION },
 	{ "amtelemark", 		Cmd_Amtelemark_f, 			CMD_NOINTERMISSION },
+	{ "amvictory",			Cmd_EmoteVictory_f, 		CMD_NOINTERMISSION|CMD_ALIVE },//EMOTE
 	{ "amvstr",				Cmd_Amvstr_f,				CMD_NOINTERMISSION },
 	{ "callteamvote",		Cmd_CallTeamVote_f,			CMD_NOINTERMISSION },
 	{ "callvote",			Cmd_CallVote_f,				CMD_NOINTERMISSION },
