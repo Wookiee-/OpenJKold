@@ -3483,7 +3483,7 @@ void Cmd_DebugSetBodyAnim_f(gentity_t *self)
 
 void StandardSetBodyAnim(gentity_t *self, int anim, int flags, int body)
 {
-	G_SetAnim(self, NULL, SETANIM_BOTH, anim, flags, 0);
+	G_SetAnim(self, NULL, body, anim, flags, 0);
 }
 void DismembermentTest(gentity_t *self);
 
