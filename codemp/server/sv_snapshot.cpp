@@ -439,8 +439,8 @@ static void SV_AddEntitiesVisibleFromPoint( vec3_t origin, clientSnapshot_t *fra
 		}
 #endif
 
-		if (ent->s.eType >= ET_EVENTS && sv_legacyFixes->integer && !(sv_legacyFixes->integer & SVFIXES_DISABLE_MOVEMENT_EVENT_CHECKS) &&
-			svs.servermod < SVMOD_JAPRO && svs.servermod != SVMOD_UNKNOWN && svs.servermod != SVMOD_MBII)//only check event types on known mods, to avoid modified eTypes/event enum conflicts
+		if (ent->s.eType >= ET_EVENTS  && sv_legacyFixes->integer && !(sv_legacyFixes->integer & SVFIXES_DISABLE_MOVEMENT_EVENT_CHECKS) &&
+			 svs.servermod < SVMOD_JAPRO && svs.servermod != SVMOD_UNKNOWN && svs.servermod != SVMOD_MBII)//only check event types on known mods, to avoid modified eTypes/event enum conflicts
 		{
 			int eventNum = (ent->s.eType - ET_EVENTS) & ~EV_EVENT_BITS;
 

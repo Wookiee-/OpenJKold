@@ -200,10 +200,10 @@ if(MSVC)
 	set(SharedDefines ${SharedDefines} "_SCL_SECURE_NO_WARNINGS")
 	set(SharedDefines ${SharedDefines} "_CRT_NONSTDC_NO_DEPRECATE")
 
-	set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} /arch:SSE2")
+#	set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} /arch:IA32")
 	set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} /MP")
 
-	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /arch:SSE2")
+#	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /arch:IA32")
 	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /MP")
 
 	# We don't try to control symbol visibility under MSVC.
@@ -233,20 +233,22 @@ elseif (("${CMAKE_C_COMPILER_ID}" STREQUAL "GNU") OR ("${CMAKE_C_COMPILER_ID}" M
 #                set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -msse2")
 	endif()
 
-	set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} -O2")
-	set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -O2")
+        set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} -O2")
+        set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -O2")
 
 	# enable somewhat modern C++
 	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
-
+        set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -std=c99")
 	
 	if("${CMAKE_C_COMPILER_ID}" STREQUAL "GNU")
 		set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall")
 		set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wno-comment")
 		set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fsigned-char")
 		if (X86)
+#                        set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -mstackrealign")
                         set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -mfpmath=387")
                         set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fPIC")
+                        set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -pipe")
 		endif()
 
 		if(WIN32)
@@ -267,8 +269,11 @@ elseif (("${CMAKE_C_COMPILER_ID}" STREQUAL "GNU") OR ("${CMAKE_C_COMPILER_ID}" M
 		set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-comment")
 		set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fsigned-char")
 		if (X86)
+#                        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -mstackrealign")
                         set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -mfpmath=387")
                         set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fPIC")
+                        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pipe")
+
 		endif()
 	elseif("${CMAKE_CXX_COMPILER_ID}" MATCHES "Clang")
 		set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall")
