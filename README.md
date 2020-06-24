@@ -18,7 +18,7 @@ This is based from OpenJK source and selected code added from the jaPRO/EternalJ
 * Sabertouchdmg toggled
 * Clean compile
 * Emotes (removed till I find some that works)
-* EternalJK (Credit to Bucky) openjkded for duel isolation and many more.
+* Duel Isolation, Duel Shell Removed
 
 ## Game Commands
 
@@ -35,11 +35,7 @@ This is based from OpenJK source and selected code added from the jaPRO/EternalJ
 
 * Amlogin, Amlogout, Amtele, Amtelemark, Ammap, Npc, Amforceteam, Amlockteam, Aminfo, Amsay, AmStatus
 
-## To be added or fixed
-
-* More admin commands like amban, amkick
-* And many more
 
 ## Dropbox OpenJK Binaries & Server Config
 
-* https://www.dropbox.com/sh/yc4lm58ft8kqsyl/AAA3LMsYFAL9NSdnFmiSQY1Oa?dl=0
+* To be updated soon
