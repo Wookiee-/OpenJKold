@@ -17,7 +17,7 @@ This is based from OpenJK source and selected code added from the jaPRO/EternalJ
 * JKA/JO Saber Ghoul2Collision can be toggled on/off
 * Sabertouchdmg toggled
 * Clean compile
-* Emotes (removed till I find some that works)
+* Emotes (Some are broken)
 * Duel Isolation, Duel Shell Removed
 
 ## Game Commands
