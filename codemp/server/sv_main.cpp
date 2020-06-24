@@ -67,7 +67,6 @@ cvar_t	*sv_filterCommands; // strict filtering on commands (1: strip ['\r', '\n'
 cvar_t	*sv_autoDemo;
 cvar_t	*sv_autoDemoBots;
 cvar_t	*sv_autoDemoMaxMaps;
-cvar_t	*sv_legacyFixes;
 cvar_t	*sv_banFile;
 cvar_t	*sv_snapShotDuelCull;
 

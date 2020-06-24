@@ -1432,15 +1432,6 @@ static void SV_UserMove( client_t *cl, msg_t *msg, qboolean delta ) {
 	for ( i = 0 ; i < cmdCount ; i++ ) {
 		cmd = &cmds[i];
 		MSG_ReadDeltaUsercmdKey( msg, key, oldcmd, cmd );
-		if ( sv_legacyFixes->integer ) {
-			// block "charge jump" and other nonsense
-			if ( cmd->forcesel == FP_LEVITATION || cmd->forcesel >= NUM_FORCE_POWERS ) {
-				cmd->forcesel = 0xFFu;
-			}
-
-			// affects speed calculation
-			cmd->angles[ROLL] = 0;
-		}
 		oldcmd = cmd;
 	}
 
