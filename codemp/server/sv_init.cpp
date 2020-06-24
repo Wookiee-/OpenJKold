@@ -28,6 +28,14 @@ along with this program; if not, see <http://www.gnu.org/licenses/>.
 #include "qcommon/MiniHeap.h"
 #include "qcommon/stringed_ingame.h"
 #include "sv_gameapi.h"
+#include "icarus/GameInterface.h"
+
+#include <unistd.h>
+#include <sys/mman.h>
+#include <cstdint>
+#include <cstdio>
+#include <cstdlib>
+#include <link.h>
 
 /*
 ===============
@@ -922,7 +930,6 @@ static void SV_InitRef( void ) {
 #endif
 
 void SV_Init (void) {
-	int index;
 
 	time( &svs.startTime );
 
@@ -953,18 +960,21 @@ void SV_Init (void) {
 	sv_hostname = Cvar_Get ("sv_hostname", "*Jedi*", CVAR_SERVERINFO | CVAR_ARCHIVE, "The name of the server that is displayed in the serverlist" );
 	sv_maxclients = Cvar_Get ("sv_maxclients", "8", CVAR_SERVERINFO | CVAR_LATCH, "Max. connected clients" );
 
-
+	Cvar_Get("sv_enableDuelCull", "1", 0);
+	Cvar_Get("sv_debugCMCull", "0", 0);
+	Cvar_Get("sv_debugSnapshotCull", "0", 0);	
+	
 	//cvar_t	*sv_ratePolicy;		// 1-2
 	//cvar_t	*sv_clientRate;
 	sv_ratePolicy = Cvar_Get( "sv_ratePolicy", "1", CVAR_ARCHIVE_ND, "Determines which policy of enforcement is used for client's \"rate\" cvar" );
 	Cvar_CheckRange(sv_ratePolicy, 1, 2, qtrue);
-	sv_clientRate = Cvar_Get( "sv_clientRate", "90000", CVAR_ARCHIVE_ND);
+	sv_clientRate = Cvar_Get( "sv_clientRate", "50000", CVAR_ARCHIVE_ND);
 	sv_minRate = Cvar_Get ("sv_minRate", "0", CVAR_ARCHIVE_ND | CVAR_SERVERINFO, "Min bandwidth rate allowed on server. Use 0 for unlimited." );
 	sv_maxRate = Cvar_Get ("sv_maxRate", "0", CVAR_ARCHIVE_ND | CVAR_SERVERINFO, "Max bandwidth rate allowed on server. Use 0 for unlimited." );
 	sv_minPing = Cvar_Get ("sv_minPing", "0", CVAR_ARCHIVE_ND | CVAR_SERVERINFO );
 	sv_maxPing = Cvar_Get ("sv_maxPing", "0", CVAR_ARCHIVE_ND | CVAR_SERVERINFO );
-	sv_floodProtect = Cvar_Get ("sv_floodProtect", "1", CVAR_ARCHIVE, "Protect against flooding of server commands" );
-	sv_newfloodProtect = Cvar_Get("sv_newfloodProtect", "1", CVAR_ARCHIVE, "Use new method of delaying commands with flood protection");
+	sv_floodProtect = Cvar_Get ("sv_floodProtect", "1", CVAR_ARCHIVE | CVAR_SERVERINFO, "Protect against flooding of server commands" );
+	sv_floodProtectSlow = Cvar_Get ("sv_floodProtectSlow", "1", CVAR_ARCHIVE | CVAR_SERVERINFO, "Use original method of delaying commands with flood protection" );
 	// systeminfo
 	Cvar_Get ("sv_cheats", "1", CVAR_SYSTEMINFO | CVAR_ROM, "Allow cheats on server if set to 1" );
 	sv_serverid = Cvar_Get ("sv_serverid", "0", CVAR_SYSTEMINFO | CVAR_ROM );
@@ -977,12 +987,11 @@ void SV_Init (void) {
 	// server vars
 	sv_rconPassword = Cvar_Get ("rconPassword", "", CVAR_TEMP );
 	sv_privatePassword = Cvar_Get ("sv_privatePassword", "", CVAR_TEMP );
-	sv_snapsMin = Cvar_Get ("sv_snapsMin", "0", CVAR_ARCHIVE_ND ); // 1 <=> sv_snapsMax
-	sv_snapsMax = Cvar_Get ("sv_snapsMax", "0", CVAR_ARCHIVE_ND ); // sv_snapsMin <=> sv_fps
-	sv_snapsPolicy = Cvar_Get ("sv_snapsPolicy", "2", CVAR_ARCHIVE_ND, "Determines which policy of enforcement is used for client's \"snaps\" cvar");
+	sv_snapsMin = Cvar_Get ("sv_snapsMin", "10", CVAR_ARCHIVE_ND ); // 1 <=> sv_snapsMax
+	sv_snapsMax = Cvar_Get ("sv_snapsMax", "40", CVAR_ARCHIVE_ND ); // sv_snapsMin <=> sv_fps
+	sv_snapsPolicy = Cvar_Get ("sv_snapsPolicy", "1", CVAR_ARCHIVE_ND, "Determines which policy of enforcement is used for client's \"snaps\" cvar");
 	Cvar_CheckRange(sv_snapsPolicy, 0, 2, qtrue);
 	sv_fps = Cvar_Get ("sv_fps", "40", CVAR_SERVERINFO, "Server frames per second" );
-	Cvar_CheckRange(sv_fps, 0, 1000, qtrue);
 	sv_timeout = Cvar_Get ("sv_timeout", "200", CVAR_TEMP );
 	sv_zombietime = Cvar_Get ("sv_zombietime", "2", CVAR_TEMP );
 	Cvar_Get ("nextmap", "", CVAR_TEMP );
@@ -990,8 +999,7 @@ void SV_Init (void) {
 	sv_allowDownload = Cvar_Get ("sv_allowDownload", "0", CVAR_SERVERINFO, "Allow clients to download mod files via UDP from the server");
 	sv_master[0] = Cvar_Get ("sv_master1", MASTER_SERVER_NAME, CVAR_PROTECTED );
 	sv_master[1] = Cvar_Get ("sv_master2", JKHUB_MASTER_SERVER_NAME, CVAR_PROTECTED);
-	sv_master[3] = Cvar_Get("sv_master3", "master.ouned.de", CVAR_PROTECTED);
-	for(index = 3; index < MAX_MASTER_SERVERS; index++)
+	for(int index = 2; index < MAX_MASTER_SERVERS; index++)
 		sv_master[index] = Cvar_Get(va("sv_master%d", index + 1), "", CVAR_ARCHIVE_ND|CVAR_PROTECTED);
 	sv_reconnectlimit = Cvar_Get ("sv_reconnectlimit", "3", 0);
 	sv_showghoultraces = Cvar_Get ("sv_showghoultraces", "0", 0);
@@ -1001,7 +1009,7 @@ void SV_Init (void) {
 	sv_mapChecksum = Cvar_Get ("sv_mapChecksum", "", CVAR_ROM);
 	sv_lanForceRate = Cvar_Get ("sv_lanForceRate", "1", CVAR_ARCHIVE_ND );
 
-	sv_filterCommands = Cvar_Get( "sv_filterCommands", "2", CVAR_ARCHIVE );
+	sv_filterCommands = Cvar_Get( "sv_filterCommands", "1", CVAR_ARCHIVE );
 
 //	sv_debugserver = Cvar_Get ("sv_debugserver", "0", 0);
 
@@ -1009,24 +1017,10 @@ void SV_Init (void) {
 	sv_autoDemoBots = Cvar_Get( "sv_autoDemoBots", "0", CVAR_ARCHIVE_ND, "Record server-side demos for bots" );
 	sv_autoDemoMaxMaps = Cvar_Get( "sv_autoDemoMaxMaps", "0", CVAR_ARCHIVE_ND );
 
-#ifndef DEDICATED //Default this to off on client to avoid potential mod compatibility issues.
-	sv_legacyFixes = Cvar_Get( "sv_legacyFixes", "0", CVAR_ARCHIVE );
-#else
 	sv_legacyFixes = Cvar_Get( "sv_legacyFixes", "1", CVAR_ARCHIVE );
-#endif
 
 	sv_banFile = Cvar_Get( "sv_banFile", "serverbans.dat", CVAR_ARCHIVE, "File to use to store bans and exceptions" );
-
-	sv_snapShotDuelCull = Cvar_Get("sv_snapShotDuelCull", "1", CVAR_NONE, "Snapshot-based duel isolation");
-
-	sv_pingFix = Cvar_Get("sv_pingFix", "1", CVAR_ARCHIVE_ND, "Improved scoreboard client ping calculation");
-	sv_hibernateTime = Cvar_Get("sv_hibernateTime", "0", CVAR_ARCHIVE_ND, "Time after which server will enter hibernation mode");
-	sv_hibernateFPS = Cvar_Get("sv_hibernateFPS", "2", CVAR_ARCHIVE_ND, "FPS during hibernation mode");
-	Cvar_CheckRange(sv_hibernateFPS, 1, 1000, qtrue);
-
-#ifdef DEDICATED
-	sv_antiDST = Cvar_Get("sv_antiDST", "1", CVAR_NONE, "Attempts to detect and kick players injecting or using DST");
-#endif
+	sv_snapShotDuelCull = Cvar_Get("sv_snapShotDuelCull", "1", CVAR_NONE, "Snapshot-based duel isolation");	
 
 	// initialize bot cvars so they are listed and can be set before loading the botlib
 	SV_BotInitCvars();
@@ -1132,3 +1126,4 @@ Ghoul2 Insert Start
 	if( sv_killserver->integer != 2 )
 		CL_Disconnect( qfalse );
 }
+

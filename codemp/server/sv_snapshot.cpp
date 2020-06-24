@@ -361,14 +361,7 @@ SV_AddEntitiesVisibleFromPoint
 ===============
 */
 float g_svCullDist = -1.0f;
-#define MAX_LANDING_EFFECTS_PER_SNAPSHOT 16
-static void SV_AddEntitiesVisibleFromPoint( vec3_t origin, clientSnapshot_t *frame,
-#ifndef DEDICATED
-									snapshotEntityNumbers_t *eNums, qboolean portal )
-#else
-									snapshotEntityNumbers_t *eNums, qboolean portal, qboolean skipDuelCull )
-#endif
-{
+static void SV_AddEntitiesVisibleFromPoint( vec3_t origin, clientSnapshot_t *frame, snapshotEntityNumbers_t *eNums, qboolean portal, client_t *client ) {
 	int		e, i;
 	sharedEntity_t *ent;
 	svEntity_t	*svEnt;
@@ -379,7 +372,6 @@ static void SV_AddEntitiesVisibleFromPoint( vec3_t origin, clientSnapshot_t *fra
 	byte	*bitvector;
 	vec3_t	difference;
 	float	length, radius;
-	int		effectCount = 0;
 
 	// during an error shutdown message we may need to transmit
 	// the shutdown message after the server has shutdown, so
@@ -433,30 +425,14 @@ static void SV_AddEntitiesVisibleFromPoint( vec3_t origin, clientSnapshot_t *fra
 			}
 		}
 
-#ifdef DEDICATED
-		if (!skipDuelCull && DuelCull(SV_GentityNum(frame->ps.clientNum), ent) == 1) {
+		bool culled = DuelCull(SV_GentityNum(frame->ps.clientNum), ent);
+		if ((frame->ps.duelInProgress == qfalse && !client->drawduelers && culled)
+		    || (frame->ps.duelInProgress == qtrue && !client->drawothers && culled)) {
+			if (Cvar_VariableIntegerValue("sv_debugSnapshotCull")) {
+				SV_SendServerCommand(svs.clients + frame->ps.clientNum, va("print \"SnapshotCull ent: %d\"\n", SV_NumForGentity(ent)));
+			}
 			continue;
-		}
-#endif
-
-		if (ent->s.eType >= ET_EVENTS  && sv_legacyFixes->integer && !(sv_legacyFixes->integer & SVFIXES_DISABLE_MOVEMENT_EVENT_CHECKS) &&
-			 svs.servermod < SVMOD_JAPRO && svs.servermod != SVMOD_UNKNOWN && svs.servermod != SVMOD_MBII)//only check event types on known mods, to avoid modified eTypes/event enum conflicts
-		{
-			int eventNum = (ent->s.eType - ET_EVENTS) & ~EV_EVENT_BITS;
-
-			if (eventNum == EV_JUMP || eventNum == EV_FALL || eventNum == EV_FOOTSTEP)
-			{ //block these movement-triggered event entities, these should always be on a player
-				continue;
-			}
-			
-			if ((eventNum == EV_PLAY_EFFECT || eventNum == EV_PLAY_EFFECT_ID) &&
-				(ent->s.eventParm >= EFFECT_WATER_SPLASH && ent->s.eventParm <= EFFECT_LANDING_GRAVEL)) //all landing effects
-			{
-				effectCount++;
-				if (effectCount > MAX_LANDING_EFFECTS_PER_SNAPSHOT)
-					continue; //block these so they cant be abused on ffa3
-			}
-		}
+		}			
 
 		svEnt = SV_SvEntityForGentity( ent );
 
@@ -483,16 +459,6 @@ static void SV_AddEntitiesVisibleFromPoint( vec3_t origin, clientSnapshot_t *fra
 		{ //rww - portal entities are always sent as well
 			SV_AddEntToSnapshot( svEnt, ent, eNums );
 			continue;
-		}
-
-		if (sv_autoDemo->integer == 2) //How find out how to only add all entities for the bot named RECORDER, not all bots? what entities can we still exclude?
-		{
-			sharedEntity_t *ent2;
-			ent2 = SV_GentityNum(frame->ps.clientNum);
-			if (ent2->r.svFlags & SVF_BOT && ent2->playerState->pm_type == PM_SPECTATOR) {
-				SV_AddEntToSnapshot( svEnt, ent, eNums );
-				continue;
-			}
 		}
 
 		// ignore if not touching a PV leaf
@@ -564,11 +530,7 @@ static void SV_AddEntitiesVisibleFromPoint( vec3_t origin, clientSnapshot_t *fra
 					continue;
 				}
 			}
-#ifndef DEDICATED
-			SV_AddEntitiesVisibleFromPoint( ent->s.origin2, frame, eNums, qtrue );
-#else
-			SV_AddEntitiesVisibleFromPoint( ent->s.origin2, frame, eNums, qtrue, skipDuelCull);
-#endif
+			SV_AddEntitiesVisibleFromPoint( ent->s.origin2, frame, eNums, qtrue, client );
 		}
 	}
 }
@@ -655,11 +617,7 @@ static void SV_BuildClientSnapshot( client_t *client ) {
 
 	// add all the entities directly visible to the eye, which
 	// may include portal entities that merge other viewpoints
-#ifndef DEDICATED
-	SV_AddEntitiesVisibleFromPoint( org, frame, &entityNumbers, qfalse );
-#else
-	SV_AddEntitiesVisibleFromPoint( org, frame, &entityNumbers, qfalse, client->disableDuelCull );
-#endif
+	SV_AddEntitiesVisibleFromPoint( org, frame, &entityNumbers, qfalse, client );
 
 	// if there were portals visible, there may be out of order entities
 	// in the list which will need to be resorted for the delta compression
@@ -681,30 +639,42 @@ static void SV_BuildClientSnapshot( client_t *client ) {
 		ent = SV_GentityNum(entityNumbers.snapshotEntities[i]);
 		state = &svs.snapshotEntities[svs.nextSnapshotEntities % svs.numSnapshotEntities];
 		*state = ent->s;
-#ifdef DEDICATED
-		if (DuelCull(client->gentity, ent)) {
+		
+		if (client->nonsolid && DuelCull(client->gentity, ent)) {
 			state->solid = 0;
-		}
-#endif
-
+		}	
 		if (client->noduelInProgress
-		    && client->gentity->playerState->duelInProgress
-		    && (SV_NumForGentity(client->gentity) == SV_NumForGentity(ent)
-		        || client->gentity->playerState->duelIndex == SV_NumForGentity(ent))) {
+		&& client->gentity->playerState->duelInProgress
+		&& (SV_NumForGentity(client->gentity) == SV_NumForGentity(ent)
+			|| client->gentity->playerState->duelIndex == SV_NumForGentity(ent))) {
 			state->bolt1 = 0;
 		}
 
+		// network these fields as 0
+		if (state->otherEntityNum2 == MAX_GENTITIES) {//would break all missiles
+			state->otherEntityNum2 = 0;
+		}
+		if (state->trickedentindex == MAX_GENTITIES) {//breaks TDs
+			state->trickedentindex = 0;
+		}
+		
 		svs.nextSnapshotEntities++;
 		// this should never hit, map should always be restarted first in SV_Frame
 		if ( svs.nextSnapshotEntities >= 0x7FFFFFFE ) {
 			Com_Error(ERR_FATAL, "svs.nextSnapshotEntities wrapped");
 		}
+		frame->num_entities++;
+	}
 
-	    frame->num_entities++;
+	if (client->noduelInProgress) {
+		frame->ps.duelInProgress = qfalse;
 	}
-	    if (client->noduelInProgress) {
-		    frame->ps.duelInProgress = qfalse;
-	}
+
+	if (client->noduelevent
+	    && (frame->ps.externalEvent & ~EV_EVENT_BITS) == EV_PRIVATE_DUEL) {
+		// not sure if this is exactly correct
+		frame->ps.externalEvent &= ~EV_PRIVATE_DUEL;
+	}	
 }
 
 
@@ -771,8 +741,7 @@ void SV_SendMessageToClient( msg_t *msg, client_t *client ) {
 
 	// record information about the message
 	client->frames[client->netchan.outgoingSequence & PACKET_MASK].messageSize = msg->cursize;
-	// With sv_pingFix enabled we use a time value that is not limited by sv_fps.
-	client->frames[client->netchan.outgoingSequence & PACKET_MASK].messageSent = (sv_pingFix->integer ? Sys_Milliseconds() : svs.time);
+	client->frames[client->netchan.outgoingSequence & PACKET_MASK].messageSent = svs.time;
 	client->frames[client->netchan.outgoingSequence & PACKET_MASK].messageAcked = -1;
 
 	// save the message to demo.  this must happen before sending over network as that encodes the backing databuf
@@ -886,16 +855,9 @@ void SV_SendClientSnapshot( client_t *client ) {
 	// build the snapshot
 	SV_BuildClientSnapshot( client );
 
-	if ( !client->demo.demorecording ) { //dont think this needs to be done with singledemo option
-		if (sv_autoDemo->integer == 2) {
-			if (client->netchan.remoteAddress.type == NA_BOT && !Q_stricmp(client->name, "RECORDER")) {
-				SV_BeginAutoRecordDemos();
-			}
-		}
-		else if (sv_autoDemo->integer == 1) {
-			if ( client->netchan.remoteAddress.type != NA_BOT || sv_autoDemoBots->integer ) {
-				SV_BeginAutoRecordDemos();
-			}
+	if ( sv_autoDemo->integer && !client->demo.demorecording ) {
+		if ( client->netchan.remoteAddress.type != NA_BOT || sv_autoDemoBots->integer ) {
+			SV_BeginAutoRecordDemos();
 		}
 	}
 

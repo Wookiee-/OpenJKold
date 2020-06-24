@@ -583,7 +583,7 @@ static void SV_ClipMoveToEntities( moveclip_t *clip ) {
 				}
 				else
 				{
-					continue;	// don't clip against own missiles - here it is
+					continue;	// don't clip against own missiles
 				}
 			}
 			if ( touch->r.ownerNum == passOwnerNum &&
@@ -610,10 +610,13 @@ static void SV_ClipMoveToEntities( moveclip_t *clip ) {
 		{
 			continue;
 		}
-
+		
 		if (DuelCull(SV_GentityNum(clip->passEntityNum), touch)) {
-			continue;
-		}
+			if (Cvar_VariableIntegerValue("sv_debugCMCull")) {
+				SV_SendServerCommand(svs.clients + clip->passEntityNum, va("print \"CMCull ent: %d\"\n", SV_NumForGentity(touch)));
+			}
+		continue;
+}	
 
 		// might intersect, so do an exact clip
 		clipHandle = SV_ClipHandleForEntity (touch);
@@ -738,7 +741,7 @@ Ghoul2 Insert Start
 
 			if (touch->s.number < MAX_CLIENTS)
 			{
-				VectorCopy(touch->s.apos.trBase, angles); //Since ghoul2 hit detection is based off apos.trbase, we have to add that to list of things to be unlagged?
+				VectorCopy(touch->s.apos.trBase, angles);
 			}
 			else
 			{
