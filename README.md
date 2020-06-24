@@ -1,6 +1,6 @@
-# OpenJK Extra (Linux Server Side)
+# OpenJK Base (Linux & Windows Server Side)
 
-## Direction of OpenJK Extra
+## Direction of OpenJK Base
 
 This is based from OpenJK source and selected code added from the jaPRO/EternalJK. I started this project to learn how OpenJK works but wanted to help those who play base on a regular basis.
 
