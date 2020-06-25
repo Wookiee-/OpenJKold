@@ -38,12 +38,6 @@ static void CVU_Derpity( void ) {
 // Cvar table
 //
 
-static void CVU_Headslide(void) {
-	g_slideOnPlayer.integer ?
-		(jcinfo.integer |= JAPRO_CINFO_HEADSLIDE) : (jcinfo.integer &= ~JAPRO_CINFO_HEADSLIDE);
-	trap->Cvar_Set("jcinfo", va("%i", jcinfo.integer));
-}
-
 
 typedef struct cvarTable_s {
 	vmCvar_t	*vmCvar;
