@@ -32,10 +32,10 @@ int AcceptBotCommand(char *cmd, gentity_t *pl);
 //end rww
 
 void WP_SetSaber( int entNum, saberInfo_t *sabers, int saberNum, const char *saberName );
-
 qboolean G_SaberModelSetup(gentity_t *ent);
 void Cmd_NPC_f( gentity_t *ent );
 void SetTeamQuick(gentity_t *ent, int team, qboolean doBegin);
+extern void AddIP (char *str);
 
 /*
 ==================
@@ -4408,6 +4408,50 @@ void Cmd_Amkick_f(gentity_t *ent)
 }
 //[JAPRO - Serverside - All - Amkick Function - End]
 
+//[JAPRO - Serverside - All - Amban Function - Start]
+ /*
+==================
+Cmd_Amban_f
+==================
+*/
+
+void Cmd_Amban_f(gentity_t *ent)
+{
+		int clientid = -1; 
+		char   arg[MAX_NETNAME]; 
+
+		if (!CheckAdminCmd(ent, A_ADMINBAN, "amBan"))
+			return;
+
+		if (trap->Argc() != 2) 
+        { 
+			trap->SendServerCommand( ent-g_entities, "print \"Usage: /amBan <client>.\n\"" );
+            return; 
+        } 
+
+		trap->Argv(1, arg, sizeof(arg)); 
+        clientid = JP_ClientNumberFromString(ent, arg);
+
+        if (clientid == -1 || clientid == -2)  
+        { 
+			return; 
+        } 
+
+                if (ent->client->sess.fullCouncil || ent->client->sess.fullKnight || ent->client->sess.fullInstructor  )
+		{
+			if (g_entities[clientid].client->ps.clientNum != ent->client->ps.clientNum)
+				return;
+			else
+				trap->SendServerCommand( ent-g_entities, "print \"You are not authorized to use this command on this player (amBan).\n\"" );
+		}
+
+		AddIP(g_entities[clientid].client->sess.IP);
+		trap->SendConsoleCommand( EXEC_APPEND, va("clientkick %i", clientid) );
+
+}
+
+//[JAPRO - Serverside - All - Amban Function - End]
+
 
 //[JAPRO - Serverside - All - Amlogin Function - Start]
 /*
@@ -5112,6 +5156,12 @@ void Cmd_Aminfo_f(gentity_t *ent)
 			Q_strcat(buf, sizeof(buf), "amKick ");
 		if ((ent->client->sess.fullInstructor) && (g_instructorAdminLevel.integer & (1 << A_ADMINKICK))) 
 			Q_strcat(buf, sizeof(buf), "amKick "); 
+                if ((ent->client->sess.fullCouncil) && (g_councilAdminLevel.integer & (1 << A_ADMINBAN)))
+                        Q_strcat(buf, sizeof(buf), "amBan ");
+                if ((ent->client->sess.fullKnight) && (g_knightAdminLevel.integer & (1 << A_ADMINBAN)))
+                        Q_strcat(buf, sizeof(buf), "amBan ");
+                if ((ent->client->sess.fullInstructor) && (g_instructorAdminLevel.integer & (1 << A_ADMINBAN)))
+                        Q_strcat(buf, sizeof(buf), "amBan ");
 		if ((ent->client->sess.fullCouncil) && (g_councilAdminLevel.integer & (1 << A_VSTR))) 
 			Q_strcat(buf, sizeof(buf), "amVstr "); 
 		if ((ent->client->sess.fullKnight) && (g_knightAdminLevel.integer & (1 << A_VSTR))) 
@@ -5261,6 +5311,7 @@ int cmdcmp( const void *a, const void *b ) {
 
 command_t commands[] = {
 	{ "addbot",				Cmd_AddBot_f,				0 },
+	{ "amban",				Cmd_Amban_f,				0 },
 	{ "ambeg",				Cmd_EmoteBeg_f,				CMD_NOINTERMISSION|CMD_ALIVE },//EMOTE
 	{ "ambeg2",				Cmd_EmoteBeg2_f,			CMD_NOINTERMISSION|CMD_ALIVE },//EMOTE
 	{ "ambernie",			Cmd_EmoteBernie_f,			CMD_NOINTERMISSION|CMD_ALIVE },//EMOTE
