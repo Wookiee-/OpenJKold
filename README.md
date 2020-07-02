@@ -10,7 +10,6 @@ This is based from OpenJK source and selected code added from the jaPRO/EternalJ
 * Private duels the winner is restored to 100/25
 * Results of a private duel are displayed to all, with the remaining health of the winning player
 * ConsoleMOTD and CenterMOTD
-* Sliding on players head on/off
 * Duel Distance Limit on/off 
 * Council, Knight and Instructor admin level
 * Clan chat support for scrims 
@@ -19,6 +18,7 @@ This is based from OpenJK source and selected code added from the jaPRO/EternalJ
 * Clean compile
 * Emotes (Some are broken)
 * Duel Isolation, Duel Shell Removed
+* Custom Openjkded Engine
 
 ## Game Commands
 
@@ -33,7 +33,7 @@ This is based from OpenJK source and selected code added from the jaPRO/EternalJ
 
 ## Basic Admin System
 
-* Amlogin, Amlogout, Amtele, Amtelemark, Ammap, Npc, Amforceteam, Amlockteam, Aminfo, Amsay, AmStatus
+* Amlogin, Amlogout, Amtele, Amtelemark, Ammap, Npc, Amforceteam, Amlockteam, Aminfo, Amsay, AmStatus, AmBan
 
 
 ## Dropbox OpenJK Binaries & Server Config
