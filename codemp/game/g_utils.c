@@ -2103,6 +2103,50 @@ qboolean G_ExpandPointToBBox( vec3_t point, const vec3_t mins, const vec3_t maxs
 	return qtrue;
 }
 
+// trace from eyes using unlagged
+trace_t *G_RealTrace(gentity_t *ent, float dist) {
+	static trace_t tr;
+	vec3_t	start, end;
+
+	//Get start
+	VectorCopy(ent->client->ps.origin, start);
+//	start.z += ent->client->ps.viewheight; //36.0f;
+	//Get end
+	AngleVectors(ent->client->ps.viewangles, end, NULL, NULL);
+	VectorMA(start, (dist > 0.0f) ? dist : 16384.0f, end, end);
+	trap->Trace(&tr, start, NULL, NULL, end, ent->s.number, MASK_OPAQUE | CONTENTS_BODY | CONTENTS_ITEM | CONTENTS_CORPSE, qfalse, 0, 0);
+
+//	if (g_debugTrace.integer) {
+	//G_TestLine(start, tr.endpos, COLOR_MAGENTA, 2500);
+//	}
+	return &tr;
+}
+
+// trace from eyes using unlagged 
+/*
+trace_t *G_RealTrace( gentity_t *ent, float dist ) {
+	//TODO: cyclic buffer
+	static trace_t tr;
+
+	//Get start
+	vector3	start;
+	VectorCopy( &ent->client->ps.origin, &start );
+	start.z += ent->client->ps.viewheight; //36.0f;
+
+	//Get end
+	vector3 end;
+	AngleVectors( &ent->client->ps.viewangles, &end, NULL, NULL );
+	VectorMA( &start, (dist > 0.0f) ? dist : 16384.0f, &end, &end );
+
+	trap->Trace( &tr, &start, NULL, NULL, &end, ent->s.number, MASK_OPAQUE | CONTENTS_BODY | CONTENTS_ITEM | CONTENTS_CORPSE, qfalse, 0, 0 );
+
+	if ( g_debugTrace.integer ) {
+		G_TestLine( &start, &tr.endpos, COLOR_MAGENTA, 2500 );
+	}
+
+	return &tr;
+} */
+
 extern qboolean G_FindClosestPointOnLineSegment( const vec3_t start, const vec3_t end, const vec3_t from, vec3_t result );
 float ShortestLineSegBewteen2LineSegs( vec3_t start1, vec3_t end1, vec3_t start2, vec3_t end2, vec3_t close_pnt1, vec3_t close_pnt2 )
 {

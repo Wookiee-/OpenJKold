@@ -764,7 +764,11 @@ typedef struct vmCvar_s {
 	cvarHandle_t	handle;
 	int			modificationCount;
 	float		value;
-	int			integer;
+	//int			integer;
+	union {
+		int		integer;
+		unsigned int		bits;
+	};
 	char		string[MAX_CVAR_VALUE_STRING];
 } vmCvar_t;
 

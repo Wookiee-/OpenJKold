@@ -174,6 +174,11 @@ extern void *g2SaberInstance;
 extern qboolean gEscaping;
 extern int gEscapeTime;
 
+#define EMF_NONE						(0x00u)
+#define EMF_STATIC						(0x01u) // hold animation on torso + legs, don't allow movement
+#define EMF_HOLD						(0x02u) // hold animation on torso
+#define EMF_HOLSTER						(0x04u) // forcibly deactivate saber
+
 extern int dueltypes[MAX_CLIENTS];//JAPRO - Serverside - Fullforce Duels y is this extern
 
 //JAPRO - Serverside - Admin bitrates
@@ -509,6 +514,7 @@ typedef struct clientSession_s {
 	qboolean 	sawMOTD; // japro has the client been shown the MOTD?
 	char		clanpass[32];//Japro - Serverside Clanpass	
 	int			sayteammod;		//0 = normal, 1 = clan, 2 = admin
+	int			movementStyle;
 	
 } clientSession_t;
 
@@ -621,6 +627,14 @@ typedef struct renderInfo_s
 
 	int			boltValidityTime;
 } renderInfo_t;
+
+typedef struct emote_s {
+	const char *name;
+	animNumber_t animLoop, animLeave;
+	unsigned int flags;
+	qboolean            freeze;
+	animNumber_t        nextAnim;
+} emote_t;
 
 // this structure is cleared on each ClientSpawn(),
 // except for 'client->pers' and 'client->sess'
@@ -831,7 +845,9 @@ struct gclient_s {
 
 	int			lastGenCmd;
 	int			lastGenCmdTime;
-
+	
+	emote_t 	emote;
+	
 	struct force {
 		int		regenDebounce;
 		int		drainDebounce;
@@ -1172,7 +1188,7 @@ qboolean G_ActivateBehavior (gentity_t *self, int bset );
 void	G_TouchTriggers (gentity_t *ent);
 void	G_TouchSolids (gentity_t *ent);
 void	GetAnglesForDirection( const vec3_t p1, const vec3_t p2, vec3_t out );
-
+trace_t *             G_RealTrace( gentity_t *ent, float dist );
 //
 // g_object.c
 //
