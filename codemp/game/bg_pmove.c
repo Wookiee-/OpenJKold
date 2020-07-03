@@ -10306,7 +10306,7 @@ void PmoveSingle (pmove_t *pmove) {
 		}
 		else
 		{ //force forward til then
-            pm->cmd.rightmove = 0;
+            		pm->cmd.rightmove = 0;
 			pm->cmd.upmove = 0;
 			pm->cmd.forwardmove = 64;
 		}
@@ -10365,39 +10365,15 @@ void PmoveSingle (pmove_t *pmove) {
 				pm->ps->forceHandExtend = HANDEXTEND_TAUNT;
 				pm->ps->forceHandExtendTime = pm->cmd.serverTime + 100;
 				stiffenedUp = qtrue;
-//[JAPRO - Serverside +clientside - Physics - Unlock bow movement/turning- Start]
-#ifdef _CGAME
-				if (cgs.serverMod >= SVMOD_JAPLUS)
-				{
-				}
-				else
-				{
-					PM_SetPMViewAngle(pm->ps, pm->ps->viewangles, &pm->cmd);
-				}
-#endif
-				//if emotedisable baseduel, lock player view here like in basejk
+			}
+			if ( pm->ps->legsTimer > 0 || pm->ps->torsoTimer > 0 )
+			{
+				stiffenedUp = qtrue;
+				//PM_SetPMViewAngle(pm->ps, pm->ps->viewangles, &pm->cmd);
 				pm->cmd.rightmove = 0;
 				pm->cmd.upmove = 0;
 				pm->cmd.forwardmove = 0;
-				//pm->cmd.buttons = 0; //let chatbox show in meditate
-			}
-			else if ( pm->ps->legsTimer > 0 || pm->ps->torsoTimer > 0 )
-			{
-#ifdef _CGAME
-				if (cgs.serverMod >= SVMOD_JAPLUS)
-				{
-				}
-				else
-				{
-					stiffenedUp = qtrue;
-					PM_SetPMViewAngle(pm->ps, pm->ps->viewangles, &pm->cmd);
-					pm->cmd.rightmove = 0;
-					pm->cmd.upmove = 0;
-					pm->cmd.forwardmove = 0;
-					pm->cmd.buttons = 0;
-				}
-#endif
-//[JAPRO - Serverside +clientside - Physics - Unlock bow movement/turning- End]
+				//pm->cmd.buttons = 0;
 			}
 		}
 	}
@@ -10406,7 +10382,7 @@ void PmoveSingle (pmove_t *pmove) {
 	{
 		stiffenedUp = qtrue;
 		PM_SetPMViewAngle(pm->ps, pm->ps->viewangles, &pm->cmd);
-        pm->cmd.rightmove = 0;
+        	pm->cmd.rightmove = 0;
 		pm->cmd.upmove = 0;
 		pm->cmd.forwardmove = 0;
 		pm->cmd.buttons = 0;
