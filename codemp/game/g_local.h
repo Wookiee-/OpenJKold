@@ -203,32 +203,6 @@ typedef enum {
 	A_KILLVOTE
 } admin_type_t;
 
-//JAPRO - Serverside - Emote bitrates
-typedef enum {
-	E_BEG,
-	E_BEG2,
-	E_BREAKDANCE,
-	E_CHEER,
-	E_COWER,
-	E_DANCE,
-	E_HUG,
-	E_NOISY,
-	E_POINT,
-	E_RAGE,
-	E_SIT,
-	E_SURRENDER,
-	E_SMACK,
-	E_TAUNT,
-	E_VICTORY,
-	E_JAWARUN,
-	E_BERNIE,
-	E_SLEEP,
-	E_SABERFLIP,
-	E_SLAP,
-	E_SIGNAL,
-//	E_SHEEV,//Group them all here, running out of space in this :s
-	E_ALL
-} emote_type_t;
 
 struct gentity_s {
 	//rww - entstate must be first, to correspond with the bg shared entity structure
