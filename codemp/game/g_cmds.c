@@ -787,7 +787,7 @@ SetTeam
 */
 qboolean g_dontPenalizeTeam = qfalse;
 qboolean g_preventTeamBegin = qfalse;
-void SetTeam( gentity_t *ent, char *s ) {
+void SetTeam( gentity_t *ent, char *s, qboolean forcedToJoin ) {
 	int					team, oldTeam;
 	gclient_t			*client;
 	int					clientNum;
@@ -810,7 +810,7 @@ void SetTeam( gentity_t *ent, char *s ) {
 	specClient = 0;
 	specState = SPECTATOR_NOT;
 	if ( !Q_stricmp( s, "scoreboard" ) || !Q_stricmp( s, "score" )  ) {
-		if(level.isLockedspec)
+		if(level.isLockedspec && !forcedToJoin)
 		{
 				trap->SendServerCommand( ent->client->ps.clientNum, va("print \"^7The ^3Spectator ^7Access has been locked!\n\""));
 				return;
@@ -818,7 +818,7 @@ void SetTeam( gentity_t *ent, char *s ) {
 		team = TEAM_SPECTATOR;
 		specState = SPECTATOR_FREE; // SPECTATOR_SCOREBOARD disabling this for now since it is totally broken on client side
 		} else if ( !Q_stricmp( s, "follow1" ) ) {
-		if(level.isLockedspec)
+		if(level.isLockedspec && !forcedToJoin)
 		{
 				trap->SendServerCommand( ent->client->ps.clientNum, va("print \"^7The ^3Spectator ^7Access has been locked!\n\""));
 				return;
@@ -827,7 +827,7 @@ void SetTeam( gentity_t *ent, char *s ) {
 		specState = SPECTATOR_FOLLOW;
 		specClient = -1;
 		} else if ( !Q_stricmp( s, "follow2" ) ) {
-		if(level.isLockedspec)
+		if(level.isLockedspec && !forcedToJoin)
 		{
 				trap->SendServerCommand( ent->client->ps.clientNum, va("print \"^7The ^3Spectator ^7Access has been locked!\n\""));
 				return;
@@ -836,7 +836,7 @@ void SetTeam( gentity_t *ent, char *s ) {
 		specState = SPECTATOR_FOLLOW;
 		specClient = -2;
 		} else if ( !Q_stricmp( s, "spectator" ) || !Q_stricmp( s, "s" )  || !Q_stricmp( s, "spectate" ) ) {
-		if(level.isLockedspec)
+		if(level.isLockedspec && !forcedToJoin)
 		{
 				trap->SendServerCommand( ent->client->ps.clientNum, va("print \"^7The ^3Spectator ^7Access has been locked!\n\""));
 				return;
@@ -848,7 +848,7 @@ void SetTeam( gentity_t *ent, char *s ) {
 		specState = SPECTATOR_NOT;
 		if ( !Q_stricmp(s, "red") || !Q_stricmp(s, "r"))
 		{
-			if(level.isLockedred)
+			if(level.isLockedred && !forcedToJoin)
 			{
 				trap->SendServerCommand( ent->client->ps.clientNum, va("print \"^7The ^1Red ^7team is locked!\n\""));
 				return;
@@ -856,7 +856,7 @@ void SetTeam( gentity_t *ent, char *s ) {
 			team = TEAM_RED;
 		} else if (!Q_stricmp(s, "blue") || !Q_stricmp(s, "b"))
 		{
-			if(level.isLockedblue)
+			if(level.isLockedblue && !forcedToJoin)
 			{
 				trap->SendServerCommand( ent->client->ps.clientNum, va("print \"^7The ^4Blue ^7team is locked!\n\""));
 				return;
@@ -867,14 +867,14 @@ void SetTeam( gentity_t *ent, char *s ) {
 				team = PickTeam( clientNum );
 				
 				if(team == TEAM_BLUE) {
-					if (level.isLockedblue) {
+					if (level.isLockedblue && !forcedToJoin) {
 						trap->SendServerCommand( ent->client->ps.clientNum, va("print \"^7The ^4Blue ^7team is locked!\n\""));
 						return;
 					}
 
 				}
 				else if(team == TEAM_RED) {
-					if (level.isLockedred) {
+					if (level.isLockedred && !forcedToJoin) {
 						trap->SendServerCommand( ent->client->ps.clientNum, va("print \"^7The ^1Red ^7team is locked!\n\""));
 						return;
 					}
@@ -947,7 +947,7 @@ void SetTeam( gentity_t *ent, char *s ) {
 		*/
 
 	} else {
-		if(level.isLockedfree)
+		if(level.isLockedfree && !forcedToJoin)
 		{
 			trap->SendServerCommand( ent->client->ps.clientNum, va("print \"^7The ^3Free ^7team is locked!\n\""));
 			return;
@@ -1212,7 +1212,7 @@ void Cmd_Team_f( gentity_t *ent ) {
 
 	trap->Argv( 1, s, sizeof( s ) );
 
-	SetTeam( ent, s );
+	SetTeam( ent, s, qfalse );
 
 	// fix: update team switch time only if team change really happend
 	if (oldTeam != ent->client->sess.sessionTeam)
@@ -1404,11 +1404,11 @@ void Cmd_SiegeClass_f( gentity_t *ent )
 		g_preventTeamBegin = qtrue;
 		if (team == TEAM_RED)
 		{
-			SetTeam(ent, "red");
+			SetTeam(ent, "red", qfalse);
 		}
 		else if (team == TEAM_BLUE)
 		{
-			SetTeam(ent, "blue");
+			SetTeam(ent, "blue", qfalse);
 		}
 		g_preventTeamBegin = qfalse;
 
@@ -1596,7 +1596,7 @@ void Cmd_Follow_f( gentity_t *ent ) {
 
 	// first set them to spectator
 	if ( ent->client->sess.sessionTeam != TEAM_SPECTATOR ) {
-		SetTeam( ent, "spectator" );
+		SetTeam( ent, "spectator", qfalse );
 		// fix: update team switch time only if team change really happend
 		if (ent->client->sess.sessionTeam == TEAM_SPECTATOR)
 			ent->client->switchTeamTime = level.time + 5000;
@@ -1629,7 +1629,7 @@ void Cmd_FollowCycle_f( gentity_t *ent, int dir ) {
 	}
 	// first set them to spectator
 	if ( ent->client->sess.spectatorState == SPECTATOR_NOT ) {
-		SetTeam( ent, "spectator" );
+		SetTeam( ent, "spectator" , qfalse);
 		// fix: update team switch time only if team change really happend
 		if (ent->client->sess.sessionTeam == TEAM_SPECTATOR)
 			ent->client->switchTeamTime = level.time + 5000;
@@ -4698,13 +4698,13 @@ void Cmd_Amforceteam_f(gentity_t *ent)
 						if (client->pers.connected != CON_CONNECTED)//client->sess.sessionTeam
 							continue;
 						if (client->sess.sessionTeam != TEAM_RED)
-							SetTeam(&g_entities[i], "red" );
+							SetTeam(&g_entities[i], "red", qtrue );
 					}
 				}
 				else
 				{
 					if (g_entities[clientid].client->sess.sessionTeam != TEAM_RED) {
-						SetTeam(&g_entities[clientid], "red" );
+						SetTeam(&g_entities[clientid], "red", qtrue );
 						trap->SendServerCommand( -1, va("print \"%s ^7has been forced to the ^1Red ^7team.\n\"", g_entities[clientid].client->pers.netname));
 					}
 				}
@@ -4718,13 +4718,13 @@ void Cmd_Amforceteam_f(gentity_t *ent)
 						if (client->pers.connected != CON_CONNECTED)//client->sess.sessionTeam
 							continue;
 						if (client->sess.sessionTeam != TEAM_BLUE)
-							SetTeam(&g_entities[i], "blue" );
+							SetTeam(&g_entities[i], "blue", qtrue );
 					}
 				}
 				else
 				{
 					if (g_entities[clientid].client->sess.sessionTeam != TEAM_BLUE) {
-						SetTeam(&g_entities[clientid], "blue" );
+						SetTeam(&g_entities[clientid], "blue", qtrue );
 						trap->SendServerCommand( -1, va("print \"%s ^7has been forced to the ^4Blue ^7team.\n\"", g_entities[clientid].client->pers.netname));
 					}
 				}
@@ -4738,13 +4738,13 @@ void Cmd_Amforceteam_f(gentity_t *ent)
 						if (client->pers.connected != CON_CONNECTED)//client->sess.sessionTeam
 							continue;
 						if (client->sess.sessionTeam != TEAM_SPECTATOR)
-							SetTeam(&g_entities[i], "spectator" );
+							SetTeam(&g_entities[i], "spectator", qtrue );
 					}
 				}
 				else
 				{
 					if (g_entities[clientid].client->sess.sessionTeam != TEAM_SPECTATOR) {
-						SetTeam(&g_entities[clientid], "spectator" );
+						SetTeam(&g_entities[clientid], "spectator", qtrue );
 						trap->SendServerCommand( -1, va("print \"%s ^7has been forced to the ^3Spectator ^7team.\n\"", g_entities[clientid].client->pers.netname));
 					}
 				}
@@ -4758,13 +4758,13 @@ void Cmd_Amforceteam_f(gentity_t *ent)
 						if (client->pers.connected != CON_CONNECTED)//client->sess.sessionTeam
 							continue;
 						if (client->sess.sessionTeam != TEAM_FREE)
-							SetTeam(&g_entities[i], "free" );
+							SetTeam(&g_entities[i], "free" , qtrue);
 					}
 				}
 				else
 				{
 					if (g_entities[clientid].client->sess.sessionTeam != TEAM_FREE) {
-						SetTeam(&g_entities[clientid], "free");
+						SetTeam(&g_entities[clientid], "free", qtrue);
 						trap->SendServerCommand( -1, va("print \"%s ^7has been forced to the ^2Free ^7team.\n\"", g_entities[clientid].client->pers.netname));
 					}
 				}
