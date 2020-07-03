@@ -10365,6 +10365,12 @@ void PmoveSingle (pmove_t *pmove) {
 				pm->ps->forceHandExtend = HANDEXTEND_TAUNT;
 				pm->ps->forceHandExtendTime = pm->cmd.serverTime + 100;
 				stiffenedUp = qtrue;
+                               // PM_SetPMViewAngle(pm->ps, pm->ps->viewangles, &pm->cmd);
+                                pm->cmd.rightmove = 0;
+                                pm->cmd.upmove = 0;
+                                pm->cmd.forwardmove = 0;
+                               // pm->cmd.buttons = 0;
+
 			}
 			if ( pm->ps->legsTimer > 0 || pm->ps->torsoTimer > 0 )
 			{
