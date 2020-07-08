@@ -180,7 +180,7 @@ XCVAR_DEF( g_allowEmotes, 			"0", 			NULL, 				CVAR_ARCHIVE, 									qtrue )
 XCVAR_DEF( g_allowJetpack, 			"0", 			NULL, 				CVAR_ARCHIVE, 									qtrue )
 XCVAR_DEF( g_allowDropSaber, 			"0", 			NULL, 				CVAR_ARCHIVE, 									qtrue )
 
-XCVAR_DEF( g_saberTouchDmg, 			"0", 			NULL, 				CVAR_ARCHIVE, 									qtrue )
+//XCVAR_DEF( g_saberTouchDmg, 			"0", 			NULL, 				CVAR_ARCHIVE, 									qtrue )
 XCVAR_DEF( g_allowSaberSwitch, 			"0", 			NULL, 				CVAR_ARCHIVE, 									qtrue )
 XCVAR_DEF( g_duelStartHealth,			"0",			NULL,				CVAR_ARCHIVE,									qtrue )
 XCVAR_DEF( g_duelStartArmor, 			"0", 			NULL, 				CVAR_ARCHIVE, 									qtrue )
