@@ -53,7 +53,7 @@ void WP_SaberRemoveG2Model( gentity_t *saberent );
 //	g_randFix 0 == Same as basejka. Broken on Linux, fine on Windows
 //	g_randFix 1 == Use proper behaviour of RAND_MAX. Fine on Linux, fine on Windows
 //	g_randFix 2 == Intentionally break RAND_MAX. Broken on Linux, broken on Windows.
-float RandFloat( float min, float max ) {
+/*float RandFloat( float min, float max ) {
 	int randActual = rand();
 	float randMax = 32768.0f;
 #ifdef _WIN32
@@ -64,6 +64,12 @@ float RandFloat( float min, float max ) {
 		randMax = RAND_MAX;
 #endif
 	return ((randActual * (max - min)) / randMax) + min;
+} */
+
+float RandFloat(float min, float max) {
+//	return ((rand() * (max - min)) / 32768.0F) + min;
+//for linux:
+	return ((rand() * (max - min)) / (float)RAND_MAX) + min; 
 }
 
 #ifdef DEBUG_SABER_BOX
