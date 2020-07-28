@@ -14,9 +14,8 @@ This is based from OpenJK source and selected code added from the jaPRO/EternalJ
 * Council, Knight and Instructor admin level
 * Clan chat support for scrims 
 * JKA/JO Saber Ghoul2Collision can be toggled on/off
-* Sabertouchdmg toggled (Disabled)
 * Clean compile
-* Emotes (All working except two)
+* Emotes (All working)
 * Duel Isolation, Duel Shell Removed
 * Custom Openjkded Engine
 
