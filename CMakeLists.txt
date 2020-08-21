@@ -250,7 +250,6 @@ elseif (("${CMAKE_C_COMPILER_ID}" STREQUAL "GNU") OR ("${CMAKE_C_COMPILER_ID}" M
                        set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -pipe")
 #                       set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -mfpmath=sse")
                        set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -unroll")
-                       set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fno-math-errno")
 		endif()
 
 		if(WIN32)
