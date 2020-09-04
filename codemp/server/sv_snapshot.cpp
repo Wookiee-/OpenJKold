@@ -361,7 +361,13 @@ SV_AddEntitiesVisibleFromPoint
 ===============
 */
 float g_svCullDist = -1.0f;
-static void SV_AddEntitiesVisibleFromPoint( vec3_t origin, clientSnapshot_t *frame, snapshotEntityNumbers_t *eNums, qboolean portal, client_t *client ) {
+static void SV_AddEntitiesVisibleFromPoint( vec3_t origin, clientSnapshot_t *frame, 
+#ifndef DEDICATED
+											snapshotEntityNumbers_t *eNums, qboolean portal, client_t *client ) 
+#else						
+											snapshotEntityNumbers_t *eNums, qboolean portal, client_t *client, qboolean skipDuelCull )
+#endif
+{
 	int		e, i;
 	sharedEntity_t *ent;
 	svEntity_t	*svEnt;
@@ -425,14 +431,11 @@ static void SV_AddEntitiesVisibleFromPoint( vec3_t origin, clientSnapshot_t *fra
 			}
 		}
 
-		bool culled = DuelCull(SV_GentityNum(frame->ps.clientNum), ent);
-		if ((frame->ps.duelInProgress == qfalse && !client->drawduelers && culled)
-		    || (frame->ps.duelInProgress == qtrue && !client->drawothers && culled)) {
-			if (Cvar_VariableIntegerValue("sv_debugSnapshotCull")) {
-				SV_SendServerCommand(svs.clients + frame->ps.clientNum, va("print \"SnapshotCull ent: %d\"\n", SV_NumForGentity(ent)));
-			}
+#ifdef DEDICATED
+		if (!skipDuelCull && DuelCull(SV_GentityNum(frame->ps.clientNum), ent) == 1) {
 			continue;
-		}			
+		}
+#endif		
 
 		svEnt = SV_SvEntityForGentity( ent );
 
@@ -530,7 +533,11 @@ static void SV_AddEntitiesVisibleFromPoint( vec3_t origin, clientSnapshot_t *fra
 					continue;
 				}
 			}
+#ifndef DEDICATED
 			SV_AddEntitiesVisibleFromPoint( ent->s.origin2, frame, eNums, qtrue, client );
+#else
+			SV_AddEntitiesVisibleFromPoint( ent->s.origin2, frame, eNums, qtrue, client, skipDuelCull);
+#endif			
 		}
 	}
 }
@@ -617,7 +624,11 @@ static void SV_BuildClientSnapshot( client_t *client ) {
 
 	// add all the entities directly visible to the eye, which
 	// may include portal entities that merge other viewpoints
+#ifndef DEDICATED
 	SV_AddEntitiesVisibleFromPoint( org, frame, &entityNumbers, qfalse, client );
+#else
+	SV_AddEntitiesVisibleFromPoint( org, frame, &entityNumbers, qfalse, client, client->disableDuelCull );
+#endif
 
 	// if there were portals visible, there may be out of order entities
 	// in the list which will need to be resorted for the delta compression
@@ -640,24 +651,11 @@ static void SV_BuildClientSnapshot( client_t *client ) {
 		state = &svs.snapshotEntities[svs.nextSnapshotEntities % svs.numSnapshotEntities];
 		*state = ent->s;
 		
-		if (client->nonsolid && DuelCull(client->gentity, ent)) {
+#ifdef DEDICATED
+		if (DuelCull(client->gentity, ent)) {
 			state->solid = 0;
-		}	
-		if (client->noduelInProgress
-		&& client->gentity->playerState->duelInProgress
-		&& (SV_NumForGentity(client->gentity) == SV_NumForGentity(ent)
-			|| client->gentity->playerState->duelIndex == SV_NumForGentity(ent))) {
-			state->bolt1 = 0;
 		}
-
-		// network these fields as 0
-		if (state->otherEntityNum2 == MAX_GENTITIES) {//would break all missiles
-			state->otherEntityNum2 = 0;
-		}
-		if (state->trickedentindex == MAX_GENTITIES) {//breaks TDs
-			state->trickedentindex = 0;
-		}
-		
+#endif		
 		svs.nextSnapshotEntities++;
 		// this should never hit, map should always be restarted first in SV_Frame
 		if ( svs.nextSnapshotEntities >= 0x7FFFFFFE ) {
@@ -665,16 +663,6 @@ static void SV_BuildClientSnapshot( client_t *client ) {
 		}
 		frame->num_entities++;
 	}
-
-	if (client->noduelInProgress) {
-		frame->ps.duelInProgress = qfalse;
-	}
-
-	if (client->noduelevent
-	    && (frame->ps.externalEvent & ~EV_EVENT_BITS) == EV_PRIVATE_DUEL) {
-		// not sure if this is exactly correct
-		frame->ps.externalEvent &= ~EV_PRIVATE_DUEL;
-	}	
 }
 
 

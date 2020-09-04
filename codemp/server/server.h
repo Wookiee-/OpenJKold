@@ -193,21 +193,23 @@ typedef struct client_s {
 	qboolean		csUpdated[MAX_CONFIGSTRINGS];
 
 	demoInfo_t		demo;
-	bool				nonsolid;
-	bool				noduelInProgress;
-	bool				noduelevent;
-	bool				drawduelers;
-	bool				drawothers;
 
-	void defaults() {
-		nonsolid = true;
-		noduelInProgress = true;
-		noduelevent = false;
-		drawduelers = true;
-		drawothers = false;
-	}	
+#ifdef DEDICATED
+	qboolean		disableDuelCull;
+#endif
+
+
 	
 } client_t;
+
+typedef enum {
+	SVMOD_UNKNOWN,
+	SVMOD_BASEJKA,
+	SVMOD_JAPLUS,
+	SVMOD_MBII,
+	SVMOD_OPENJK,
+	SVMOD_JAPRO,
+} servermod_t;
 
 //=============================================================================
 
