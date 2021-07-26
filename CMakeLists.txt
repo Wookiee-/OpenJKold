@@ -211,7 +211,6 @@ if(MSVC)
 	# We don't try to control symbol visibility under MSVC.
 	set(OPENJK_VISIBILITY_FLAGS "")
 
-
 elseif (("${CMAKE_C_COMPILER_ID}" STREQUAL "GNU") OR ("${CMAKE_C_COMPILER_ID}" STREQUAL "Intel") OR ("${CMAKE_C_COMPILER_ID}" MATCHES "Clang"))
 	# I hope this doesn't come back to bite me in the butt later on.
 	# Realistically though, can the C and CXX compilers be different?
@@ -232,21 +231,41 @@ elseif (("${CMAKE_C_COMPILER_ID}" STREQUAL "GNU") OR ("${CMAKE_C_COMPILER_ID}" S
 	set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -ggdb")
 
 	if (X86)
-#               set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -msse2")
-#              set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -msse2")
+		#set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -msse2")
+		#set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -msse2")
+		if (("${CMAKE_C_COMPILER_ID}" STREQUAL "GNU") OR ("${CMAKE_C_COMPILER_ID}" MATCHES "Clang"))
+			set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -msse2")
+			set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -msse2")
+		endif()
 	endif()
 
-        set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} -O2")
-        set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -O2")
+	#set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} -O3")
+	#set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -O3")
+	if (("${CMAKE_C_COMPILER_ID}" STREQUAL "GNU") OR ("${CMAKE_C_COMPILER_ID}" MATCHES "Clang"))
+		set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -O3")
+		set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3")
+	else()
+		set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -O3")
+		set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3")
+		set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} -O3") 
+		set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -O3")
+	endif()
 
 	# enable somewhat modern C++
 	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
-
+	
+	# enable support for multithreading
+	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread")
+	
 	if("${CMAKE_C_COMPILER_ID}" STREQUAL "GNU")
 		set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall")
 		set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wno-comment")
 		set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fsigned-char")
 		if (X86)
+			# "x86 vm will crash without -mstackrealign since MMX
+			# instructions will be used no matter what and they
+			# corrupt the frame pointer in VM calls"
+			# -ioquake3 Makefile
 			set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -mstackrealign")
 			set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -mfpmath=sse")
 		endif()
@@ -262,10 +281,7 @@ elseif (("${CMAKE_C_COMPILER_ID}" STREQUAL "GNU") OR ("${CMAKE_C_COMPILER_ID}" S
 		set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wno-comment")
 	elseif("${CMAKE_C_COMPILER_ID}" STREQUAL "Intel")
 		set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -w")
-                if (X86)
-                	set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -pipe")
-			set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -unroll")
-                endif()
+		set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -unroll")
 		set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -falign-stack=maintain-16-byte")
 		set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -mia32")
 		
@@ -290,21 +306,15 @@ elseif (("${CMAKE_C_COMPILER_ID}" STREQUAL "GNU") OR ("${CMAKE_C_COMPILER_ID}" S
 		#set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-deprecated-writable-strings")
 		set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-comment")
 		set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-invalid-offsetof")
-
 	elseif("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Intel")
 		set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fvisibility-inlines-hidden")
-                if (X86)
-                	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pipe")
-                	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -unroll")
-                endif() 
+		 
 		set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -mia32")
 		
 		set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -static-intel")
 		set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -static-libstdc++")
-		set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -static-libgcc")	
+		set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -static-libgcc")
 	endif()
-
-
 else()
 	message(ERROR "Unsupported compiler")
 endif()
